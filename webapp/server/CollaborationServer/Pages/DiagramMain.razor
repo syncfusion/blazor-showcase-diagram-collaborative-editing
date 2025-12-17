@@ -701,7 +701,7 @@
         if (connection == null)
         {
             connection = new HubConnectionBuilder()
-                        .WithUrl("https://diagram-collaborative-editing-hxhkc9dsbeb2f2et.centralus-01.azurewebsites.net/diagramhub", options =>
+                        .WithUrl(NavigationManager.ToAbsoluteUri("diagramHub"), options =>
                         {
                             options.SkipNegotiation = false;
                             options.Transports = Microsoft.AspNetCore.Http.Connections.HttpTransportType.WebSockets | Microsoft.AspNetCore.Http.Connections.HttpTransportType.LongPolling;

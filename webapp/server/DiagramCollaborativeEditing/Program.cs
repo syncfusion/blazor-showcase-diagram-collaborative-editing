@@ -1,13 +1,8 @@
 using DiagramCollaboration.Components;
-using DiagramCollaboration.Shared;
-using Microsoft.AspNetCore.Localization;
-using Microsoft.Extensions.Options;
 using SignalRServer.Hubs;
 using SignalRServer.Services;
 using StackExchange.Redis;
 using Syncfusion.Blazor;
-using Syncfusion.Blazor.Popups;
-using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,9 +51,6 @@ if (!app.Environment.IsDevelopment())
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
-
-// Comment the below line while run the sample in local
-app.UsePathBase("/release/showcase/collaborative-diagram-editing");
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
