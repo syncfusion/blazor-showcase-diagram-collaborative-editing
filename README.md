@@ -14,8 +14,9 @@ The Blazor Diagram Collaborative Editing application provides an interactive pla
 
 Clone the repository. This repository contains Blazor Diagram Collaborative Editing Server app.
 * `webapp/server` folder has solution files to run Diagram Collaborative Editing server app.
-* The application uses SignalR with Redis for real-time collaboration. Create a Redis service instance and
-add your Redis connection string in the appsettings.json file.
+* In the sample, the service configuration is in the "DiagramHub" file, and the sample implementation is in the "DiagramMain" file.
+* The application uses SignalR with Redis for real-time collaboration. 
+* Create a Redis service instance and add Redis connection string in the appsettings.json file from your end.
 
 ### Run the demo using .NET CLI
 
