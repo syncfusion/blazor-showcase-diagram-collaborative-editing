@@ -1,0 +1,18 @@
+﻿@using Syncfusion.Blazor.Notifications
+@namespace DiagramCollaboration
+
+<SfToast @ref="ToastObj" Width="400px" ShowCloseButton="true">
+    <ToastPosition X="Right" Y="Top"></ToastPosition>
+</SfToast>
+
+@code
+{
+    public SfToast ToastObj;
+    public string ToastContent { get; set; }
+
+    internal async Task ShowToastAsync(string message)
+    {
+        ToastObj.Content = message;
+        await this.ToastObj.ShowAsync();
+    }
+}
