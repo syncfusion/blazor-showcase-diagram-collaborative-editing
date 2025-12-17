@@ -1,17 +1,8 @@
 [![.NET](https://github.com/syncfusion/blazor-showcase-diagram-builder/actions/workflows/dotnet.yml/badge.svg)](https://github.com/syncfusion/blazor-showcase-diagram-builder/actions/workflows/dotnet.yml)
 
-# Essential Studio® for Blazor - Collaborative editing
+# Essential Studio® for Blazor - Collaborative Editing
 
-The Blazor Diagram Builder application provides an interactive platform for creating and editing diagrams such as Flowcharts and Mind Maps. Built using Syncfusion Essential Studio® for Blazor, it supports real-time collaboration, allowing multiple users to work together seamlessly.
-
-Key capabilities include:
-
-* Diagram Creation with shapes and connectors
-* Collaboration for simultaneous editing
-* Export & Print options
-* Drawing Tools for customization
-
-This application is ideal for teams looking to design, share, and manage diagrams efficiently in a collaborative environment.
+The Blazor Diagram Collaborative Editing application provides an interactive platform for creating and editing diagrams such as Flowcharts and Mind Maps. Built using Syncfusion Essential Studio® for Blazor, it supports real-time collaboration, allowing multiple users to work together seamlessly. This application is ideal for teams looking to design, share, and manage diagrams efficiently in a collaborative environment.
 
 ## Requirements to run the demo
 
