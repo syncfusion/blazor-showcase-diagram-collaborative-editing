@@ -23,12 +23,8 @@ add your Redis connection string in the appsettings.json file.
 * Run the demo using the following command.
    
    To run .NET 8 Diagram Builder Server project
-   > `dotnet run --project Server-side/DiagramBuilder.csproj`
-
-   To run .NET 8 Diagram Builder WASM project
-   > `dotnet run --project wasm-side/DiagramBuilder.sln`
-* To run Diagram Builder Maui Demos,  Open the `DiagramBuilderMAUI.sln` from 'MAUI' folder via visual studio 2022.
-
+   > `dotnet run --project server/DiagramCollaborativeEditing/DiagramCollaboration.csproj.
+   > 
  - In Visual Studio, select the target platform by expanding the dropdown menu at the top toolbar. 
 
 	 > Press `F5` to run the demo.
