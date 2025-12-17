@@ -1,0 +1,92 @@
+﻿@page "/"
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <!-- Google Tag Manager -->
+    <!-- Load GTM-P3WXFWCW immediately on page load  -->
+    <script>
+        (function (w, d, s, l, i) {
+            w[l] = w[l] || []; w[l].push({
+                'gtm.start':
+                    new Date().getTime(), event: 'gtm.js'
+            }); var f = d.getElementsByTagName(s)[0],
+                j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src =
+                    'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
+        })(window, document, 'script', 'dataLayer', 'GTM-P3WXFWCW');
+    </script>
+    <!-- Load GTM-W8WD8WN on user interaction -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const events = ["mousemove", "scroll", "keydown", "touchstart"];
+            function loadGTM() {
+                events.forEach(event => document.removeEventListener(event, loadGTM));
+                (function (w, d, s, l, i) {
+                    w[l] = w[l] || []; w[l].push({
+                        'gtm.start':
+                            new Date().getTime(), event: 'gtm.js'
+                    }); var f = d.getElementsByTagName(s)[0],
+                        j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src =
+                            'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
+                })(window, document, 'script', 'dataLayer', 'GTM-W8WD8WN');
+            }
+            events.forEach(event => document.addEventListener(event, loadGTM, { once: true }));
+        });
+    </script>
+    <meta charset="UTF-8" />
+    <title>
+        Collaborative Editing  - Syncfusion Blazor Components Showcase App
+    </title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="Floor Planner shapes are used to represent an entire building, one floor of a building, or a single room. It may also include measurements, furniture, appliances, or anything else necessary to the purpose of the plan.">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <!-- To choose the proper font family -->
+    <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet'>
+    <script src="_content/Syncfusion.Blazor/scripts/syncfusion-blazor.min.js"></script>
+@{#if Release}
+    <!-- To refer the icons for the sample -->
+    <link href="_content/BlazorServerCommon_NET8/assets/db-icons1/style.min.css" rel="stylesheet" />
+    <!-- Conatins the Css property used in the sample level -->
+    <script src="_content/BlazorServerCommon_NET8/interop.min.js" async></script> 
+@{#else}
+    <!-- To refer the icons for the sample -->
+    <link href="_content/BlazorServerCommon_NET8/assets/db-icons1/style.css" rel="stylesheet" />
+    <!-- Conatins the Css property used in the sample level -->
+    <script src="_content/BlazorServerCommon_NET8/interop.js" async></script> 
+@{#endif}
+    <!-- Used for Property panel -->
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
+    <!-- To include the need theme -->
+    <link href="_content/Syncfusion.Blazor/styles/fluent2.css" rel="stylesheet" />
+
+    
+    <HeadOutlet @rendermode="@InteractiveServer" />
+</head>
+
+<body>
+    <Routes @rendermode="@InteractiveServer" />
+    <!-- Google Tag Manager (noscript) -->
+    <!--Page Load-->
+    <noscript>
+        <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-P3WXFWCW" height="0" width="0" style="display:none;visibility:hidden"></iframe>
+    </noscript>
+    <!--Interaction-->
+    <noscript>
+        <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W8WD8WN" height="0" width="0" style="display:none;visibility:hidden"></iframe>
+    </noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div id="blazor-error-ui">
+        <environment include="Staging,Production">
+            An error has occurred. This application may no longer respond until reloaded.
+        </environment>
+        <environment include="Development">
+        </environment>
+    </div>
+    <script src="_framework/blazor.web.js"></script>
+</body>
+
+</html>
