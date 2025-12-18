@@ -8,8 +8,6 @@ The Blazor Diagram Collaborative Editing application provides an interactive pla
 
 * [System requirements](https://blazor.syncfusion.com/documentation/system-requirements/)
 
-* [NET 8 WebAssembly Workload](https://learn.microsoft.com/en-us/aspnet/core/blazor/webassembly-build-tools-and-aot?view=aspnetcore-8.0#net-webassembly-build-tools)
-
 ## How to run the demo
 
 Clone the repository. This repository contains Blazor Diagram Collaborative Editing Server app.
