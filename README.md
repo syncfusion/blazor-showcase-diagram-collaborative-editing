@@ -12,17 +12,17 @@ The Blazor Diagram Collaborative Editing application provides an interactive pla
 
 Clone the repository. This repository contains Blazor Diagram Collaborative Editing Server app.
 * `webapp/server` folder has solution files to run Diagram Collaborative Editing server app.
-* In the sample, the service configuration is in the "DiagramHub" file, and the sample implementation is in the "DiagramMain" file.
-* The application uses SignalR with Redis for real-time collaboration. 
-* Create a Redis service instance and add Redis connection string in the appsettings.json file from your end.
+* In the sample, the service configuration is in the `DiagramHub` file, and the sample implementation is in the `DiagramMain` file.
+* The application uses `SignalR` with `Redis` for real-time collaboration. 
+* Create a `Redis` service instance and add Redis connection string in the appsettings.json file from your end.
 
 ### Run the demo using .NET CLI
 
 * Open the command prompt from the demo's directory.
 * Run the demo using the following command.
    
-   To run .NET 8 Diagram Builder Server project
-   > `dotnet run --project server/DiagramCollaborativeEditing/DiagramCollaboration.csproj.
+   To run .NET 8 Collaborative Editing Server project
+   > `dotnet run --project webapp/server/DiagramCollaborativeEditing/DiagramCollaboration.csproj.
    > 
  - In Visual Studio, select the target platform by expanding the dropdown menu at the top toolbar. 
 
