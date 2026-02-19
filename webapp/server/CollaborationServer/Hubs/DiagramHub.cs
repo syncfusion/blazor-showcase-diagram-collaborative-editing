@@ -63,7 +63,7 @@ namespace SignalRServer.Hubs
                             TimestampUnixMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
                             SelectorBounds = newBounds
                         };
-                        await _redisService.SetAsync(SelectionKey(Context.ConnectionId, roomName), updatedEvent);
+                        await _redisService.SetAsync(SelectionKey(currentEvent.ConnectionId, roomName), updatedEvent);
                     }
                 }
             }
@@ -334,7 +334,7 @@ namespace SignalRServer.Hubs
             if (!string.IsNullOrEmpty(json))
             {
                 var savedBy = replyToConnectionId;
-                await _diagramService.SaveDiagramDataAsync(diagramId, json, savedBy);
+                await _diagramService.SaveDiagramDataAsync(diagramId, roomName, json, savedBy);
 
                 await _diagramHubContext.Clients.Client(replyToConnectionId).SendAsync("LoadDiagramData", new DiagramData
                 {
@@ -344,7 +344,7 @@ namespace SignalRServer.Hubs
                 }, cancellationToken: connectionAborted);
                 return;
             }
-            var data = await _diagramService.GetDiagramAsync(diagramId);
+            var data = await _diagramService.GetDiagramAsync(diagramId, roomName);
             if (data != null && !string.IsNullOrEmpty(data.Data))
             {
                 await _diagramHubContext.Clients.Client(replyToConnectionId).SendAsync("LoadDiagramData", new DiagramData
@@ -463,7 +463,7 @@ namespace SignalRServer.Hubs
                 string diagramVersionKey = $"diagram_{roomName}:version";
                 var userId = Context.Items["UserId"]?.ToString();
 
-                await _diagramService.SaveDiagramDataAsync(diagramId, string.Empty, userId);
+                await _diagramService.SaveDiagramDataAsync(diagramId, roomName, string.Empty, userId);
                 await _redisService.DeleteAsync(diagramUpdateHistoryKey);
                 await _redisService.DeleteAsync(diagramVersionKey);
 
