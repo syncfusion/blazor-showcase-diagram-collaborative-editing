@@ -390,8 +390,6 @@ namespace SignalRServer.Hubs
                 // Track user in diagram
                 if (string.IsNullOrEmpty(userName))
                 {
-                    // Use per-room sequential generator so names increase even if users reconnect.
-                    // Start from existingRoomUsersCount+1 for this session if generator not present.
                     long next = _roomNextUserNumber.AddOrUpdate(roomName, existingRoomUsersCount + 1, (k, v) => v + 1);
                     userName = next.ToString();
                 }
@@ -402,9 +400,6 @@ namespace SignalRServer.Hubs
                     UserName = userName,
                 };
 
-                // No global user map maintained; track per-room instead.
-
-                // Add to per-room tracking
                 var roomDict = _roomUsers.GetOrAdd(roomName, _ => new ConcurrentDictionary<string, DiagramUser>(StringComparer.Ordinal));
                 roomDict[userId] = diagramUser;
 
@@ -501,7 +496,6 @@ namespace SignalRServer.Hubs
                 await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomName);
                 await _redisService.DeleteAsync(SelectionKey(Context.ConnectionId, roomName));
 
-                // Removed from per-room tracking below; no global map maintained.
                 if (!string.IsNullOrEmpty(roomName))
                 {
                     if (_roomUsers.TryGetValue(roomName, out var roomDict))
@@ -510,7 +504,6 @@ namespace SignalRServer.Hubs
                         if (roomDict.IsEmpty)
                         {
                             _roomUsers.TryRemove(roomName, out _);
-                            // Reset per-room sequence and counters when room becomes empty
                             _roomNextUserNumber.TryRemove(roomName, out _);
                         }
                     }
