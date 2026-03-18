@@ -149,7 +149,7 @@ namespace SignalRServer.Hubs
 
                 if (!acceptedSingle)
                 {
-                    var recentUpdates = await GetUpdatesSinceVersionAsync(clientVersion,roomName, maxScan: 200);
+                    var recentUpdates = await GetUpdatesSinceVersionAsync(clientVersion, roomName, maxScan: 200);
                     var recentlyTouched = new HashSet<string>(StringComparer.Ordinal);
                     foreach (var upd in recentUpdates)
                     {
@@ -180,6 +180,7 @@ namespace SignalRServer.Hubs
                 await StoreUpdateInRedis(update, connId, roomName);
                 SelectionEvent selectionEvent = BuildSelectedElementEvent(currentSelection.ElementIds, currentSelection.SelectorBounds);
                 await UpdateSelectionBoundsInRedis(selectionEvent, currentSelection.ElementIds, currentSelection.SelectorBounds, roomName);
+                await Clients.Caller.SendAsync("UpdateVersion", serverVersionFinal);
                 await Clients.OthersInGroup(roomName).SendAsync("ReceiveData", payloads, serverVersionFinal, selectionEvent);
                 await RemoveOldUpdates(serverVersionFinal, roomName);
             }
