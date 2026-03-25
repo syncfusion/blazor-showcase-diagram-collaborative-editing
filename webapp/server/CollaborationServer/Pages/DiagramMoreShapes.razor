@@ -1,0 +1,99 @@
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Popups
+@using Syncfusion.Blazor.Lists
+
+@namespace DiagramCollaboration
+
+<div id="moreShapesDiv" class="db-palette-more-shapes">
+    <SfButton CssClass="e-flat" @onclick="@MoreShapesClick">More Shapes</SfButton>
+</div>
+<SfDialog @ref="@MoreShapesPalette" ID="moreShapesDialog" @bind-Visible="MoreShapesVisible" Width="800px" Height="435px" ShowCloseIcon="true" IsModal="true" AllowDragging="true">
+    <DialogTemplates>
+        <Header>
+            Shapes
+        </Header>
+        <Content>
+            <div style="display: flex; height: 100%; overflow: hidden;">
+                <div class="temp-left-pane" style="width: 25%; min-width: 200px; height: 100%; overflow-y: auto; border-right: 1px solid #e0e0e0; margin-right: 16px">
+                    <SfListView @ref="@MoreShapesList" ID="moreShapesList" ShowCheckBox="true" DataSource="@ListViewData" EnablePersistence="true" Height="100%">
+                        <ListViewFieldSettings TValue="ListViewDataFields" Id="Id" Text="Text" IsChecked="Checked"></ListViewFieldSettings>
+                        <ListViewEvents TValue="ListViewDataFields" Clicked="@ListViewSelectionChange">
+                        </ListViewEvents>
+                    </SfListView>
+                </div>
+                <div class="diagramTemplates temp-right-pane" style="flex: 1; height: 100%; overflow: auto;">
+                    <img id="shapePreviewImage" src="@ShapeImageLoaction" style="@BackgroundImage display: block; max-width: none;" alt="@alternateText"/>
+                </div>
+            </div>
+        </Content>
+    </DialogTemplates>
+    <DialogButtons>
+        <DialogButton OnClick="@BtnSave" Content="Apply" IsPrimary="true" CssClass="e-flat e-db-primary">
+        </DialogButton>
+        <DialogButton OnClick="@btnCancelClick" Content="Cancel" CssClass="e-flat">
+        </DialogButton>
+    </DialogButtons>
+</SfDialog>
+@code {
+    public DiagramLeftSideBar Parent;
+    SfDialog MoreShapesPalette;
+    SfListView<ListViewDataFields> MoreShapesList;
+    List<ListViewDataFields> SelectedItems = new List<ListViewDataFields>();
+    bool MoreShapesVisible = false;
+    string ShapeImageLoaction = "./assets/dbstyle/shapes_images/flow.png";
+    string BackgroundImage = "background-image: url(./assets/dbstyle/shapes_images/flow.png);";
+    public string OverviewSpanClassName = "db-overview";
+    string alternateText = "flowshapes";
+
+    public class ListViewDataFields
+    {
+        public string Id { get; set; }
+        public string Text { get; set; }
+        public bool Checked { get; set; }
+    }
+    public List<ListViewDataFields> ListViewData = new List<ListViewDataFields>()
+    {
+        new ListViewDataFields(){ Text= "Flow", Id="flowShapes", Checked= true },
+        new ListViewDataFields(){ Text= "Basic", Id="basicShapes", Checked= true },
+        new ListViewDataFields(){ Text= "BPMN", Id="bpmnShapes", Checked= true },
+        new ListViewDataFields(){ Text= "Connectors", Id="connectorsShapes", Checked= true },
+        new ListViewDataFields(){ Text= "Electrical", Id="ElectricalShapes", Checked= false },
+        new ListViewDataFields(){ Text= "Swimlane", Id="swimlaneShapes", Checked= false },
+        new ListViewDataFields(){ Text= "Network", Id="networksShapes", Checked= false },
+        new ListViewDataFields(){ Text= "Floorplan", Id="floorplansShapes", Checked= false },
+    };
+
+    private void MoreShapesClick()
+    {
+        MoreShapesVisible = true;
+    }
+    private void ListViewSelectionChange(Syncfusion.Blazor.Lists.ClickEventArgs<ListViewDataFields> args)
+    {
+        ShapeImageLoaction = "./assets/dbstyle/shapes_images/" + args.Text.ToLower() + ".png";
+        BackgroundImage = "background-image: url(./assets/dbstyle/shapes_images/" + args.Text.ToLower() + ".png" +");";
+        alternateText = args.Text.ToLower() + "shapes";
+        foreach (ListViewDataFields data in SelectedItems)
+        {
+            if (data.Text == args.Text)
+            {
+                SelectedItems.Remove(data);
+                break;
+            }
+        }
+        (args.ItemData as ListViewDataFields).Checked = args.IsChecked;
+        args.Cancel = true;
+        SelectedItems.Add(args.ItemData as ListViewDataFields);
+    }
+
+    private async Task BtnSave()
+    {
+        Parent.Parent.DiagramSpinnerObj.Show();
+        await Parent.DiagramSymbolpalette.UpdatePalettes(SelectedItems);
+        Parent.Parent.DiagramSpinnerObj.Hide();
+        await MoreShapesPalette.HideAsync();
+    }
+    private async Task btnCancelClick()
+    {
+        await MoreShapesPalette.HideAsync();
+    }
+}

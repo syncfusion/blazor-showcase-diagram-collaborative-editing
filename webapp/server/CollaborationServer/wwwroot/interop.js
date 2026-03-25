@@ -64,7 +64,9 @@ function saveDiagram(data, filename) {
         a.remove();
     }
 }
-
+function click() {
+    document.getElementById('defaultfileupload').click();
+}
 function downloadCsv() {
     var csv = 'Name,EmployeeID,Role,Department,Location,Phone,Email,SupervisorName,SupervisorID,ImageURL\n';
     var data = [
@@ -155,13 +157,21 @@ function downloadFile(data, filename) {
     anchorElement.remove();
 }
 UtilityMethods_hideElements = function (elementType, diagramType) {
-    var diagramContainer = document.getElementsByClassName('DiagramCollaboration-container')[0];
-    if (diagramContainer.classList.contains(elementType)) {        
-            diagramContainer.classList.remove(elementType);        
-    }
-    else {
+    var diagramContainer = document.getElementsByClassName('diagramcollaboration-container')[0];
+    if (!diagramContainer.classList.contains(elementType)) {
         diagramContainer.classList.add(elementType);
     }
+    var diagramContainer = document.getElementsByClassName('db-diagram-container')[0];
+    diagramContainer.style.width = "calc(100% - 250px)";
+    window.dispatchEvent(new Event('resize'));
+};
+UtilityMethods_showElements = function (elementType, diagramType) {
+    var diagramContainer = document.getElementsByClassName('diagramcollaboration-container')[0];
+    if (diagramContainer.classList.contains(elementType)) {
+        diagramContainer.classList.remove(elementType);
+    }
+    var diagramContainer = document.getElementsByClassName('db-diagram-container')[0];
+    diagramContainer.style.width = "calc(100% - 350px)";
     window.dispatchEvent(new Event('resize'));
 };
 function hideMenubar() {
@@ -173,11 +183,9 @@ function getHyperLinkValueFromDocument(id, attribute) {
 function setHyperLinkValuesToDocument(id, value) {
     document.getElementById(id).value = value;
 }
-function click() {
-    document.getElementById('UploadFiles').click();
-}
+
 function hideElements(elementType) {
-    var diagramContainer = document.getElementsByClassName('DiagramCollaboration-container')[0];
+    var diagramContainer = document.getElementsByClassName('diagramcollaboration-container')[0];
     if (diagramContainer.classList.contains(elementType)) {
         diagramContainer.classList.remove(elementType);
     } else {

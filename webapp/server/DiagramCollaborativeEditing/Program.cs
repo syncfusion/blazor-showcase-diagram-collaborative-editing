@@ -1,8 +1,13 @@
 using DiagramCollaboration.Components;
+using DiagramCollaboration.Shared;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.Extensions.Options;
 using SignalRServer.Hubs;
 using SignalRServer.Services;
 using StackExchange.Redis;
 using Syncfusion.Blazor;
+using Syncfusion.Blazor.Popups;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +24,7 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(provider =>
     var connectionString = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379,abortConnect=false";
     return ConnectionMultiplexer.Connect(connectionString);
 });
+builder.Services.AddScoped<SampleService>();
 builder.Services.AddScoped<IRedisService, RedisService>();
 builder.Services.AddScoped<IDiagramService, DiagramService>();
 builder.Services.AddSignalR(options =>
@@ -52,8 +58,12 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+
+// Comment the below line while run the sample in local
+app.UsePathBase("/development/showcase/collaborative-diagram-editing");
+
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+app.MapStaticAssets();
 app.UseRouting();
 
 app.MapHub<DiagramHub>("/diagramHub").DisableAntiforgery();
