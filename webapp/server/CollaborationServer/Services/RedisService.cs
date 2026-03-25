@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
+using System.Net;
 using System.Text.Json;
 namespace SignalRServer.Services
 {
@@ -38,13 +39,11 @@ end
 ";
             try
             {
-                var result = (StackExchange.Redis.RedisResult[])await _database.ScriptEvaluateAsync(
+                StackExchange.Redis.RedisResult[] result = (StackExchange.Redis.RedisResult[])await _database.ScriptEvaluateAsync(
                     lua,
                     keys: new StackExchange.Redis.RedisKey[] { key },
                     values: new StackExchange.Redis.RedisValue[] { expectedVersion.ToString() });
-
                 bool accepted = (int)result[0] == 1;
-
                 long version;
                 if (result[1].Type == StackExchange.Redis.ResultType.Integer)
                     version = (long)result[1];
@@ -59,8 +58,8 @@ end
                 long current = 0;
                 try
                 {
-                    var raw = await _database.StringGetAsync(key);
-                    if (raw.HasValue && long.TryParse(raw.ToString(), out var v))
+                    RedisValue raw = await _database.StringGetAsync(key);
+                    if (raw.HasValue && long.TryParse(raw.ToString(), out long v))
                         current = v;
                 }
                 catch { }
@@ -72,7 +71,7 @@ end
         {
             try
             {
-                var value = await _database.StringGetAsync(key);
+                RedisValue value = await _database.StringGetAsync(key);
                 return value.HasValue ? JsonSerializer.Deserialize<T>((string)value) : default;
             }
             catch (Exception ex)
@@ -86,7 +85,7 @@ end
         {
             try
             {
-                var serializedValue = JsonSerializer.Serialize(value);
+                string serializedValue = JsonSerializer.Serialize(value);
                 return await _database.StringSetAsync(key, serializedValue, expiry != null ? (Expiration)expiry : default);
             }
             catch (Exception ex)
@@ -113,7 +112,7 @@ end
         {
             try
             {
-                var serializedValue = JsonSerializer.Serialize(value);
+                string serializedValue = JsonSerializer.Serialize(value);
                 return await _database.ListLeftPushAsync(key, serializedValue);
             }
             catch (Exception ex)
@@ -165,21 +164,19 @@ end
 
         public async Task<List<T>> GetByPatternAsync<T>(string pattern)
         {
-            var result = new List<T>();
+            List<T> result = new List<T>();
             try
             {
-                var endpoints = _database.Multiplexer.GetEndPoints();
-                var server = _database.Multiplexer.GetServer(endpoints.First());
-
+                EndPoint[] endpoints = _database.Multiplexer.GetEndPoints();
+                IServer server = _database.Multiplexer.GetServer(endpoints.First());
                 // Get all keys matching the pattern
-                var keys = server.Keys(pattern: pattern);
-
-                foreach (var key in keys)
+                IEnumerable<RedisKey> keys = server.Keys(pattern: pattern);
+                foreach (RedisKey key in keys)
                 {
-                    var value = await _database.StringGetAsync(key);
+                    RedisValue value = await _database.StringGetAsync(key);
                     if (value.HasValue)
                     {
-                        var deserialized = JsonSerializer.Deserialize<T>((string)value);
+                        T? deserialized = JsonSerializer.Deserialize<T>((string)value);
                         if (deserialized != null)
                             result.Add(deserialized);
                     }
@@ -189,7 +186,6 @@ end
             {
                 _logger.LogError(ex, "Error retrieving keys with pattern {Pattern}", pattern);
             }
-
             return result;
         }
     }

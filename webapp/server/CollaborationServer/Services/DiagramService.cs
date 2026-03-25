@@ -7,7 +7,6 @@ namespace SignalRServer.Services
     {
         private readonly IRedisService _redis;
         private readonly ILogger<DiagramService> _logger;
-
         private const string DIAGRAM_KEY_PREFIX = "diagramData:";
 
         public DiagramService(IRedisService redis, ILogger<DiagramService> logger)
@@ -20,14 +19,12 @@ namespace SignalRServer.Services
         {
             try
             {
-                var key = $"{DIAGRAM_KEY_PREFIX}{diagramId}";
-                var diagramData = await _redis.GetAsync<DiagramData>(key);
-
+                string key = $"{DIAGRAM_KEY_PREFIX}{diagramId}";
+                DiagramData? diagramData = await _redis.GetAsync<DiagramData>(key);
                 if (diagramData != null)
                 {
                     _logger.LogDebug("Retrieved diagram {DiagramId}", diagramId);
                 }
-
                 return diagramData;
             }
             catch (Exception ex)
@@ -40,20 +37,17 @@ namespace SignalRServer.Services
         {
             try
             {
-                var diagramData = new DiagramData
+                DiagramData diagramData = new DiagramData
                 {
                     DiagramId = diagramId,
                     Data = data,
                 };
-
-                var key = $"{DIAGRAM_KEY_PREFIX}{diagramId}";
-                var success = await _redis.SetAsync(key, diagramData);
-
+                string key = $"{DIAGRAM_KEY_PREFIX}{diagramId}";
+                bool success = await _redis.SetAsync(key, diagramData);
                 if (success)
                 {
                     _logger.LogInformation($"Saved diagram by user {userId} with provided data");
                 }
-
                 return success;
             }
             catch (Exception ex)

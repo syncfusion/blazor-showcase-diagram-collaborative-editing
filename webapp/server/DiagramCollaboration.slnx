@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="CollaborationServer/BlazorServerCommon_NET10.csproj" />
+  <Project Path="DiagramCollaborativeEditing/DiagramCollaboration.csproj" />
+</Solution>

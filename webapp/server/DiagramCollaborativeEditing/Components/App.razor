@@ -41,28 +41,32 @@
         Collaborative Editing  - Syncfusion Blazor Components Showcase App
     </title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="description" content="Floor Planner shapes are used to represent an entire building, one floor of a building, or a single room. It may also include measurements, furniture, appliances, or anything else necessary to the purpose of the plan.">
+    <meta name="description" content="Collaborative Editing sample demonstrates real-time multi-user diagram editing using Syncfusion Blazor Diagram and SignalR with live presence and conflict-free updates.">
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <!-- To choose the proper font family -->
     <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet'>
-    <script src="_content/Syncfusion.Blazor/scripts/syncfusion-blazor.min.js"></script>
-@{#if Release}
-    <!-- To refer the icons for the sample -->
-    <link href="_content/BlazorServerCommon_NET8/assets/db-icons1/style.min.css" rel="stylesheet" />
-    <!-- Conatins the Css property used in the sample level -->
-    <script src="_content/BlazorServerCommon_NET8/interop.min.js" async></script> 
-@{#else}
-    <!-- To refer the icons for the sample -->
-    <link href="_content/BlazorServerCommon_NET8/assets/db-icons1/style.css" rel="stylesheet" />
-    <!-- Conatins the Css property used in the sample level -->
-    <script src="_content/BlazorServerCommon_NET8/interop.js" async></script> 
-@{#endif}
-    <!-- Used for Property panel -->
+    <link href="_content/Syncfusion.Blazor/styles/bootstrap5.css" rel="stylesheet" />
+    <link href="assets/dbstyle/bootstrap5.css" rel="stylesheet" />
+    <link href="assets/dbstyle/bootstrap5.min.css" rel="stylesheet" />
+    @{
+    #if Release
+        }
+        <link href=@Assets["assets/db-icons1/style.min.css"] rel="stylesheet" />
+        <link href=@Assets["assets/dbstyle/diagrambuilder.min.css"] rel="stylesheet" />
+        <script src=@Assets["_content/BlazorServerCommon_NET10/interop.min.js"] async></script>
+    @{
+    #else
+    }
+    <link href=@Assets["assets/db-icons1/style.css"] rel="stylesheet" />
+    <link href=@Assets["assets/dbstyle/diagrambuilder.css"] rel="stylesheet" />
+    <script src=@Assets["_content/BlazorServerCommon_NET10/interop.js"] async></script>
+    @{
+    #endif
+    }
     <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
-    <!-- To include the need theme -->
-    <link href="_content/Syncfusion.Blazor/styles/fluent2.css" rel="stylesheet" />
-
+    <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet'>
+    <script src="_content/Syncfusion.Blazor/scripts/syncfusion-blazor.min.js"></script>
     
     <HeadOutlet @rendermode="@InteractiveServer" />
 </head>
