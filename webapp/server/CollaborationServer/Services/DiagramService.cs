@@ -15,12 +15,13 @@ namespace SignalRServer.Services
             _logger = logger;
         }
 
-        public async Task<DiagramData?> GetDiagramAsync(string diagramId)
+        public async Task<DiagramData?> GetDiagramAsync(string diagramId, string roomName)
         {
             try
             {
-                string key = $"{DIAGRAM_KEY_PREFIX}{diagramId}";
+                string key = $"{DIAGRAM_KEY_PREFIX}_{roomName}_{diagramId}";
                 DiagramData? diagramData = await _redis.GetAsync<DiagramData>(key);
+
                 if (diagramData != null)
                 {
                     _logger.LogDebug("Retrieved diagram {DiagramId}", diagramId);
@@ -33,7 +34,7 @@ namespace SignalRServer.Services
                 return null;
             }
         }
-        public async Task<bool> SaveDiagramDataAsync(string diagramId, string data, string userId)
+        public async Task<bool> SaveDiagramDataAsync(string diagramId, string roomName, string data, string userId)
         {
             try
             {
@@ -42,8 +43,10 @@ namespace SignalRServer.Services
                     DiagramId = diagramId,
                     Data = data,
                 };
-                string key = $"{DIAGRAM_KEY_PREFIX}{diagramId}";
+
+                string key = $"{DIAGRAM_KEY_PREFIX}_{roomName}_{diagramId}";
                 bool success = await _redis.SetAsync(key, diagramData);
+
                 if (success)
                 {
                     _logger.LogInformation($"Saved diagram by user {userId} with provided data");

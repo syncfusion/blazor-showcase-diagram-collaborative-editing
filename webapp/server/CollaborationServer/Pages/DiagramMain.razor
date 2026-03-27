@@ -376,7 +376,7 @@
             <div class="db-diagram-container">
                 <div id="diagramContainerDiv" class=@DiagramContainerClassName style="position:relative;">
                     <DiagramMessagePopUp @ref="DiagramMessageRef"></DiagramMessagePopUp>
-                    <SfDiagramComponent @ref="@DiagramInstance" ID="@DiagramId" @bind-Connectors="@DiagramConnectors" HistoryChanged="@OnHistoryChange" SelectionChanging="@OnSelectionChanging" SizeChanged="@SizeChanged" PositionChanged="@PositionChanged" RotationChanged="@RotateChanged" CollectionChanged="CollectionChanged" SelectionChanged="@OnSelectionChanged" Height="100%" GetCustomTool="@GetCustomTool" @bind-Nodes="@DiagramNodes" SelectionSettings="@SelectionSettings" NodeCreating="OnNodeCreating" ConnectorCreating="OnConnectorCreating" DragDrop="DragDropEvent" @bind-InteractionController="@DiagramTool" @bind-DrawingObject="@DiagramDrawingObject" TextChanged="TextChanged">
+                    <SfDiagramComponent @ref="@DiagramInstance" ID="@DiagramId" @bind-Connectors="@DiagramConnectors" HistoryChanged="@OnHistoryChange" SelectionChanging="@OnSelectionChanging" SizeChanged="@SizeChanged" PositionChanged="@PositionChanged" RotationChanged="@RotateChanged" CollectionChanged="CollectionChanged" SelectionChanged="@OnSelectionChanged" Height="100%" GetCustomTool="@GetCustomTool" @bind-Nodes="@DiagramNodes" SelectionSettings="@SelectionSettings" NodeCreating="OnNodeCreating" DragDrop="DragDropEvent" @bind-InteractionController="@DiagramTool" @bind-DrawingObject="@DiagramDrawingObject" TextChanged="TextChanged">
                         <PageSettings @bind-ShowPageBreaks="@DiagramShowPageBreaks" @bind-Orientation="@DiagramOrientation" @bind-Width="@DiagramPageWidth" @bind-Height="@DiagramPageHeight" @bind-MultiplePage=@IsMultiplePage>
                             <BackgroundStyle @bind-Background="@DiagramBgColor"></BackgroundStyle>
                             <PageMargin @bind-Left="@marginLeft" @bind-Top="@marginRight"></PageMargin>
@@ -507,16 +507,16 @@
 
 
 @code {
-    public MainLayout Parent;
+    public MainLayout? Parent;
     public int ConnectorCount { get; set; } = 0;
     public DiagramSelectionSettings SelectionSettings { get; set; } = new DiagramSelectionSettings() { Constraints = SelectorConstraints.All & ~SelectorConstraints.Tooltip };
     public DiagramSize? SymbolPreview { get; set; }
     public SymbolMargin? SymbolMargin { get; set; } = new SymbolMargin { Left = 10, Right = 10, Top = 10, Bottom = 10 };
     public SfDiagramComponent? DiagramInstance { get; set; }
     public SfSymbolPaletteComponent? PaletteInstance { get; set; }
-    public DiagramPropertyContainer DiagramPropertyPanel { get; set; }
-    public SpinnerComponent DiagramSpinnerObj { get; set; }
-    public DiagramLeftSideBar LeftSideBar;
+    public DiagramPropertyContainer? DiagramPropertyPanel { get; set; }
+    public SpinnerComponent? DiagramSpinnerObj { get; set; }
+    public DiagramLeftSideBar? LeftSideBar;
     public string DiagramBuilderClassName = "diagramcollaboration-container hide-properties";
     public string DiagramContainerClassName = "db-current-diagram-container";
     public string PropertyPanelClassName = "db-property-editor-container";
@@ -681,8 +681,8 @@
     List<string> BpmnAssociationConnector = new List<string>() { "Sequence", "Message", "Association", "Direction" };
 
     #region Collaborative editing 
-    DiagramMessagePopUp DiagramMessageRef;
-    private string ConnectionId;
+    DiagramMessagePopUp? DiagramMessageRef;
+    private string? ConnectionId;
     private List<string> ActiveUsers = new();
     bool isLoadDiagram = false;
     List<string> editedElements = new();
@@ -712,7 +712,7 @@
 
     private IEnumerable<string>? GetEditedElementIds(HistoryChangedEventArgs args)
     {
-        HistoryEntryBase historyEntry = args.Entry as HistoryEntryBase;
+        HistoryEntryBase? historyEntry = args.Entry as HistoryEntryBase;
         if (args == null && historyEntry == null)
         {
             return null;
@@ -722,13 +722,13 @@
         {
             return null;
         }
-        List<string> all = changedObjects.Select(n => n.ID).ToList();
+        List<string?> all = changedObjects.Select(n => n.ID).ToList();
 
-        IEnumerable<string> parentIds = changedObjects
+        IEnumerable<string?> parentIds = changedObjects
             .SelectMany(nodeObj =>
             {
                 List<string?> ids = new List<string?>();
-                if (nodeObj.AdditionalInfo.TryGetValue("parentId", out object? parent))
+                if (nodeObj.AdditionalInfo!.TryGetValue("parentId", out object? parent))
                     ids.Add(parent?.ToString());
                 if (nodeObj.AdditionalInfo.TryGetValue("swimlaneId", out object? swimlane))
                     ids.Add(swimlane?.ToString());
@@ -751,7 +751,7 @@
     {
         if (args.ActionTrigger is not (HistoryChangedAction.Undo or HistoryChangedAction.Redo))
         {
-            return args.Source;
+            return args.Source!;
         }
 
         IDiagramObject? historyObject = (args.ActionTrigger == HistoryChangedAction.Undo)
@@ -764,11 +764,11 @@
                 {
                     List<NodeBase> objects = new List<NodeBase>();
 
-                    objects.AddRange(selectionSettings.Nodes);
-                    objects.AddRange(selectionSettings.Connectors);
-                    objects.AddRange(selectionSettings.Swimlanes);
-                    objects.AddRange(selectionSettings.Phases);
-                    objects.AddRange(selectionSettings.Lanes);
+                    objects.AddRange(selectionSettings.Nodes!);
+                    objects.AddRange(selectionSettings.Connectors!);
+                    objects.AddRange(selectionSettings.Swimlanes!);
+                    objects.AddRange(selectionSettings.Phases!);
+                    objects.AddRange(selectionSettings.Lanes!);
 
                     if (selectionSettings.Header != null)
                     {
@@ -783,7 +783,7 @@
                 }
             default:
                 {
-                    return args.Source;
+                    return args.Source!;
                 }
         }
     }
@@ -837,7 +837,7 @@
         if (connection == null)
         {
             connection = new HubConnectionBuilder()
-                        .WithUrl("https://diagram-collaborative-editing-hxhkc9dsbeb2f2et.eastus2-01.azurewebsites.net/diagramhub", options =>
+                        .WithUrl(NavigationManager.ToAbsoluteUri("/diagramHub"), options =>
                         {
                             options.SkipNegotiation = false;
                             options.Transports = Microsoft.AspNetCore.Http.Connections.HttpTransportType.WebSockets | Microsoft.AspNetCore.Http.Connections.HttpTransportType.LongPolling;
@@ -899,25 +899,25 @@
     private void RevertCurrentChanges()
     {
         isRevertingCurrentChanges = true;
-        DiagramInstance.Undo();
+        DiagramInstance?.Undo();
         isRevertingCurrentChanges = false;
     }
     private async Task ShowConflict()
     {
         string message = "You have a conflicts in your page. Your changes could not be merged.";
-        await DiagramMessageRef.ShowToastAsync(message);
+        await DiagramMessageRef!.ShowToastAsync(message);
     }
     private async Task ShowUserLeft(string userName)
     {
         int userIdNumber = int.Parse(userName);
         string message = $"SF{userIdNumber:D4} left the diagram.";
-        await DiagramMessageRef.ShowToastAsync(message);
+        await DiagramMessageRef!.ShowToastAsync(message);
     }
     private async Task ShowUserJoined(string userName)
     {
         int userIdNumber = int.Parse(userName);
         string message = $"SF{userIdNumber:D4} joined the diagram.";
-        await DiagramMessageRef.ShowToastAsync(message);
+        await DiagramMessageRef!.ShowToastAsync(message);
     }
     private async Task OnConnectedAsync(string connectionId)
     {
@@ -926,8 +926,8 @@
             this.ConnectionId = connectionId;
             currentUser = string.IsNullOrEmpty(currentUser) ? $"{userCount}" : currentUser;
             // Join the room after connection is established
-            if (connection.State != HubConnectionState.Disconnected)
-                await connection.SendAsync("JoinDiagram", roomName, DiagramId, currentUser);
+            if (connection?.State != HubConnectionState.Disconnected)
+                await connection!.SendAsync("JoinDiagram", roomName, DiagramId, currentUser);
             userCount++;
         }
     }
@@ -936,9 +936,9 @@
     {
         try
         {
-            string data = DiagramInstance.SaveDiagram();
-            if(connection.State != HubConnectionState.Disconnected)
-                await connection.InvokeAsync("ProvideDiagramState", requestId, data);
+            string data = DiagramInstance!.SaveDiagram();
+            if(connection?.State != HubConnectionState.Disconnected)
+                await connection!.InvokeAsync("ProvideDiagramState", requestId, data);
         }
         catch (Exception ex)
         {
@@ -948,7 +948,7 @@
 
     private async Task OnReceiveDiagramUpdate(List<string> diagramChanges, long newVersion, SelectionEvent evt)
     {
-        await DiagramInstance.SetDiagramUpdatesAsync(diagramChanges);
+        await DiagramInstance!.SetDiagramUpdatesAsync(diagramChanges);
         this.clientVersion = newVersion;
         await PeerSelectionChanged(evt);
         StateHasChanged();
@@ -969,21 +969,127 @@
     }
     private async Task PeerSelectionChanged(SelectionEvent evt)
     {
-        if (DiagramInstance.SelectionSettings != null && evt != null && !string.IsNullOrEmpty(evt.UserId) && evt.ElementIds.Count > 0)
+        if (DiagramInstance?.SelectionSettings != null && evt != null && !string.IsNullOrEmpty(evt.UserId) && evt.ElementIds?.Count > 0)
         {
-            _peerSelections[evt.ConnectionId] = (evt.UserName ?? string.Empty, evt.ElementIds?.ToHashSet() ?? new(), evt.SelectorBounds);
+            _peerSelections[evt.ConnectionId] = (evt.UserName ?? string.Empty, evt.ElementIds?.ToHashSet() ?? new(), evt.SelectorBounds!);
             foreach (var (key, peer) in _peerSelections)
             {
                 if (key == evt.ConnectionId) continue;
-                if (peer.NodeIds != null && peer.NodeIds.SetEquals(evt.ElementIds))
+                if (peer.NodeIds != null && peer.NodeIds.SetEquals(evt.ElementIds!))
                 {
-                    if (!IsEqual(peer.selectorBounds.Bounds, evt.SelectorBounds.Bounds) || peer.selectorBounds.RotationAngle != evt.SelectorBounds.RotationAngle)
+                    if (!IsEqual(peer.selectorBounds.Bounds!, evt.SelectorBounds?.Bounds!) || peer.selectorBounds.RotationAngle != evt.SelectorBounds?.RotationAngle)
                     {
-                        _peerSelections[key] = (peer.UserName, peer.NodeIds, evt.SelectorBounds);
+                        _peerSelections[key] = (peer!.UserName, peer!.NodeIds, evt?.SelectorBounds!);
                     }
                 }
             }
+
+            foreach (var (key, peer) in _peerSelections)
+            {
+                if (key == evt?.ConnectionId)
+                    continue;
+
+                if (peer.NodeIds == null || peer.NodeIds.Count == 0)
+                    continue;
+
+                bool hasOverlap = false;
+
+                foreach (var id in peer.NodeIds)
+                {
+                    IDiagramObject? obj = DiagramInstance?.GetObject(id);
+                    if (obj == null)
+                        continue;
+
+                    if (obj is Connector)
+                    {
+                        hasOverlap = true;
+                        break;
+                    }
+                    if (evt!.ElementIds!.Contains(id))
+                    {
+                        hasOverlap = true;
+                        break;
+                    }
+                }
+
+                if (!hasOverlap)
+                    continue;
+
+                SelectorBounds computedBounds = CalculateSelectorBounds(peer.NodeIds, evt!.SelectorBounds?.RotationAngle ?? 0);
+
+                if (!IsEqual(peer.selectorBounds.Bounds!, computedBounds.Bounds!) ||
+                    peer.selectorBounds.RotationAngle != computedBounds.RotationAngle)
+                {
+                    _peerSelections[key] =
+                        (peer.UserName, peer.NodeIds, computedBounds);
+                }
+            }
         }
+    }
+
+    private SelectorBounds CalculateSelectorBounds(HashSet<string> nodeIds, double rotationAngle)
+    {
+        double minLeft = double.PositiveInfinity;
+        double minTop = double.PositiveInfinity;
+        double maxRight = double.NegativeInfinity;
+        double maxBottom = double.NegativeInfinity;
+
+        foreach (var elementId in nodeIds)
+        {
+            var obj = DiagramInstance?.GetObject(elementId);
+            if (obj == null)
+                continue;
+
+            if (obj is Node node)
+            {
+                double nx = node.OffsetX;
+                double ny = node.OffsetY;
+                double w = node.Width ?? 0;
+                double h = node.Height ?? 0;
+
+                double left = nx - w / 2;
+                double top = ny - h / 2;
+                double right = nx + w / 2;
+                double bottom = ny + h / 2;
+
+                minLeft = Math.Min(minLeft, left);
+                minTop = Math.Min(minTop, top);
+                maxRight = Math.Max(maxRight, right);
+                maxBottom = Math.Max(maxBottom, bottom);
+            }
+            else if (obj is Connector connector)
+            {
+                DiagramPoint?[] pts = new[] { connector.SourcePoint, connector.TargetPoint };
+
+                foreach (DiagramPoint pt in pts)
+                {
+                    if (pt == null) continue;
+
+                    minLeft = Math.Min(minLeft, pt.X);
+                    minTop = Math.Min(minTop, pt.Y);
+                    maxRight = Math.Max(maxRight, pt.X);
+                    maxBottom = Math.Max(maxBottom, pt.Y);
+                }
+            }
+        }
+
+        if (double.IsPositiveInfinity(minLeft) || double.IsNegativeInfinity(maxRight))
+            return default!;
+
+        double width = Math.Max(0, maxRight - minLeft);
+        double height = Math.Max(0, maxBottom - minTop);
+
+        return new SelectorBounds
+        {
+            Bounds = new DiagramRect
+            {
+                X = minLeft + width / 2,
+                Y = minTop + height / 2,
+                Width = width,
+                Height = height
+            },
+            RotationAngle = rotationAngle
+        };
     }
 
     private string GetUserColor(string userName)
@@ -1032,7 +1138,7 @@
 
     public class SelectorBounds
     {
-        public DiagramRect Bounds { get; set; }
+        public DiagramRect? Bounds { get; set; }
         public double RotationAngle { get; set; }
     }
 
@@ -1044,19 +1150,19 @@
         public string? UserName { get; set; }
         public List<string>? ElementIds { get; set; }
         public long TimestampUnixMs { get; set; }
-        public SelectorBounds SelectorBounds { get; set; }
+        public SelectorBounds? SelectorBounds { get; set; }
     }
     private List<string> GetSelectedIds(DiagramSelectionSettings selectionSettings)
     {
-        List<string> ids = new List<string>();
+        List<string?> ids = new List<string?>();
 
         // Collect all selected objects
         List<NodeBase> objects = new List<NodeBase>();
-        objects.AddRange(selectionSettings.Nodes);
-        objects.AddRange(selectionSettings.Connectors);
-        objects.AddRange(selectionSettings.Swimlanes);
-        objects.AddRange(selectionSettings.Phases);
-        objects.AddRange(selectionSettings.Lanes);
+        objects.AddRange(selectionSettings.Nodes!);
+        objects.AddRange(selectionSettings.Connectors!);
+        objects.AddRange(selectionSettings.Swimlanes!);
+        objects.AddRange(selectionSettings.Phases!);
+        objects.AddRange(selectionSettings.Lanes!);
         if (selectionSettings.Header != null)
         {
             objects.Add(selectionSettings.Header);
@@ -1065,7 +1171,7 @@
             .Where(obj => !string.IsNullOrEmpty(obj.ID))
             .Select(obj => obj.ID)
             .ToList();
-        return ids;
+        return ids!;
     }
 
     public bool HasExactMatch(string myConnectionId, HashSet<string> myNodeIds)
@@ -1084,7 +1190,7 @@
     }
     private DiagramRect CalculateConnectorBounds(Connector connector)
     {
-        double minX = Math.Min(connector.SourcePoint.X, connector.TargetPoint.X);
+        double minX = Math.Min(connector.SourcePoint!.X, connector.TargetPoint!.X);
         double minY = Math.Min(connector.SourcePoint.Y, connector.TargetPoint.Y);
         double width = Math.Abs(connector.TargetPoint.X - connector.SourcePoint.X);
         double height = Math.Abs(connector.TargetPoint.Y - connector.SourcePoint.Y);
@@ -1110,34 +1216,34 @@
             elementIds = GetSelectedIds(diagramSelectionSettings).ToHashSet();
             HashSet<string> editedSet = new HashSet<string>(editedElements);
             List<string> keysToRemove = new List<string>();
-            if(isPropertyChanged)
+            if (isPropertyChanged)
             {
-                if(diagramSelectionSettings.Nodes.Count > 0)
+                if (diagramSelectionSettings.Nodes!.Count > 0)
                 {
                     Node selectedNode = diagramSelectionSettings.Nodes[0];
                     bounds = new SelectorBounds()
-                    {
-                        Bounds = new DiagramRect() { X = selectedNode.OffsetX, Y = selectedNode.OffsetY, Width = (double)selectedNode!.Width!, Height = (double)selectedNode!.Height! },
-                        RotationAngle = diagramSelectionSettings.Nodes[0].RotationAngle
-                    };
+                        {
+                            Bounds = new DiagramRect() { X = selectedNode.OffsetX, Y = selectedNode.OffsetY, Width = (double)selectedNode!.Width!, Height = (double)selectedNode!.Height! },
+                            RotationAngle = diagramSelectionSettings.Nodes[0].RotationAngle
+                        };
                 }
-                else if(diagramSelectionSettings.Connectors.Count > 0)
+                else if (diagramSelectionSettings.Connectors.Count > 0)
                 {
                     bounds = new SelectorBounds()
-                    {
-                        Bounds = CalculateConnectorBounds(diagramSelectionSettings.Connectors[0]),
-                        RotationAngle = diagramSelectionSettings.RotationAngle
-                    };
+                        {
+                            Bounds = CalculateConnectorBounds(diagramSelectionSettings.Connectors[0]),
+                            RotationAngle = diagramSelectionSettings.RotationAngle
+                        };
                 }
                 isPropertyChanged = false;
             }
             else
             {
                 bounds = new SelectorBounds()
-                {
-                    Bounds = new DiagramRect() { X = diagramSelectionSettings.OffsetX, Y = diagramSelectionSettings.OffsetY, Width = diagramSelectionSettings.Width, Height = diagramSelectionSettings.Height },
-                    RotationAngle = diagramSelectionSettings.RotationAngle
-                };
+                    {
+                        Bounds = new DiagramRect() { X = diagramSelectionSettings.OffsetX, Y = diagramSelectionSettings.OffsetY, Width = diagramSelectionSettings.Width, Height = diagramSelectionSettings.Height },
+                        RotationAngle = diagramSelectionSettings.RotationAngle
+                    };
             }
             foreach (KeyValuePair<string, (string UserName, HashSet<string> NodeIds, SelectorBounds selectorBounds)> kvp in _peerSelections.Where(p => p.Key != this.ConnectionId))
             {
@@ -1149,7 +1255,7 @@
                     {
                         foreach (string id in commonIds)
                         {
-                            IDiagramObject objectValue = DiagramInstance.GetObject(id);
+                            IDiagramObject? objectValue = DiagramInstance.GetObject(id);
                             if (objectValue == null)
                             {
                                 kvp.Value.NodeIds.Remove(id);
@@ -1166,21 +1272,26 @@
                 }
                 else if (kvp.Value.NodeIds.SetEquals(elementIds))
                 {
-
-                    _peerSelections[kvp.Key] = (kvp.Value.UserName, kvp.Value.NodeIds, bounds);
+                    _peerSelections[kvp.Key] = (kvp.Value.UserName!, kvp.Value.NodeIds!, bounds);
                     canRefresh = true;
                 }
-                 else if(kvp.Value.NodeIds != null && kvp.Value.NodeIds.Count > 0)
-                 {
-                     bool isConnector = false;
-                     string elementID = kvp.Value.NodeIds.FirstOrDefault()!;
-                     SelectorBounds selectorBounds = UpdateSelectionHighlighter(diagramSelectionSettings, bounds, elementID, out isConnector);
-                     if(isConnector)
-                     {
-                         _peerSelections[kvp.Key] = (kvp.Value.UserName, kvp.Value.NodeIds, selectorBounds);
-                         canRefresh = true;
-                     }
-                 }
+                else if (kvp.Value.NodeIds != null && kvp.Value.NodeIds.Count > 0)
+                {
+                    bool isConnector = false;
+                    string elementID = kvp.Value.NodeIds.FirstOrDefault()!;
+                    SelectorBounds selectorBounds = UpdateSelectionHighlighter(diagramSelectionSettings, bounds, elementID, out isConnector);
+                    if (isConnector)
+                    {
+                        _peerSelections[kvp.Key] = (kvp.Value.UserName!, kvp.Value.NodeIds, selectorBounds);
+                        canRefresh = true;
+                    }
+                }
+                if (kvp.Value.NodeIds!.Count > 1)
+                {
+                    SelectorBounds selectorBounds = CalculateSelectorBounds(kvp.Value.NodeIds, 0);
+                    _peerSelections[kvp.Key] = (kvp.Value.UserName ?? string.Empty, kvp.Value.NodeIds, selectorBounds);
+                    canRefresh = true;
+                }
             }
             foreach (string key in keysToRemove)
             {
@@ -1331,6 +1442,7 @@
             this.DiagramPropertyPanel.PanelVisibility();
             this.DiagramPropertyPanel.slider();
         }
+        this.UpdateToolbarItems();
     }
     private async void TextChanged(TextChangeEventArgs args)
     {
@@ -1787,7 +1899,7 @@
 @*Hidden:Lines*@
             #pragma warning restore BL0005
 @*End:Hidden*@
-        };
+    };
     }
 
     public void OnNodeCreating(IDiagramObject obj)
@@ -1804,32 +1916,20 @@
         }
         string id = node.ID ?? string.Empty;
         if (!id.StartsWith("TitleNode", StringComparison.Ordinal) &&
-            !string.Equals(type, "FloorPlanShapes", StringComparison.Ordinal))
+            !string.Equals(type, "FloorPlanShapes", StringComparison.Ordinal) && (obj as Node)?.Style?.Fill == "white")
         {
             node.Style.Fill = "#357BD2";
         }
         if (!(id.StartsWith("Annotation", StringComparison.Ordinal) ||
-              id.StartsWith("SequentialData", StringComparison.Ordinal)))
+              id.StartsWith("SequentialData", StringComparison.Ordinal)) && (obj as Node)?.Style?.StrokeColor == "black")
         {
             node.Style.StrokeColor = "White";
         }
-        if (id.StartsWith("Electrical", StringComparison.Ordinal) ||
-            id.StartsWith("Network", StringComparison.Ordinal) || string.Equals(type, "FloorPlanShapes", StringComparison.Ordinal))
+        if ((id.StartsWith("Electrical", StringComparison.Ordinal) ||
+            id.StartsWith("Network", StringComparison.Ordinal) || string.Equals(type, "FloorPlanShapes", StringComparison.Ordinal)) && (obj as Node)?.Style?.StrokeColor == "black")
         {
             node.Style.StrokeColor = "black";
         }
-
-        node.Style.Opacity = 1;
-    }
-
-    public void OnConnectorCreating(IDiagramObject obj)
-    {
-        Connector? connector = obj as Connector;
-        connector!.Style!.Fill = "black";
-        connector.Style.StrokeColor = "black";
-        connector.Style.Opacity = 1;
-        connector.TargetDecorator!.Style.Fill = "black";
-        connector.TargetDecorator.Style.StrokeColor = "black";
     }
 
     // Method is used to create a node for the palette.
@@ -1924,11 +2024,7 @@
             SourceID = sourceId,
             TargetID = targetId,
             Type = ConnectorSegmentType.Orthogonal,
-            Style = new ShapeStyle() { StrokeWidth = 2, StrokeColor = "#8D8D8D" },
-            TargetDecorator = new DecoratorSettings()
-            {
-                Style = new ShapeStyle() { StrokeColor = "#8D8D8D", Fill = "#8D8D8D" }
-            }
+            Style = new ShapeStyle() { StrokeWidth = 2 }
         };
 
         if (label != default(string))
@@ -5814,6 +5910,7 @@
                 DiagramPrintSettings print = new DiagramPrintSettings();
                 print.PageWidth = 700;
                 print.PageHeight = 1200;
+                print.FitToPage = true;
                 await DiagramInstance!.PrintAsync(print);
                 break;
             case "Cut":

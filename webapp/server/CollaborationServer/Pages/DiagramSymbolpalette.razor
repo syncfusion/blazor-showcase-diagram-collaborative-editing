@@ -24,7 +24,6 @@
     public Palette FlowShapePalette { get; set; }
     public Palette BasicShapePalette { get; set; }
     public Palette BpmnShapePalette { get; set; }
-    public Palette SwimlaneShapePalette { get; set; }
     public Palette ConnectorPalette { get; set; }
     public Palette ElectericalShapes { get; set; }
     public Palette NetworkShapes { get; set; }
@@ -34,7 +33,6 @@
     public DiagramObjectCollection<NodeBase> ConnectorList { get; set; }
     public DiagramObjectCollection<NodeBase> BPMNShapeList { get; set; }
     public DiagramObjectCollection<NodeBase> ElectricalShapeList { get; set; }
-    public DiagramObjectCollection<NodeBase> SwimlaneShapeList { get; set; }
     public DiagramObjectCollection<NodeBase> NetworkShapesList { get; set; }
     public DiagramObjectCollection<NodeBase> FloorPlaneShapesList { get; set; }
 
@@ -67,7 +65,6 @@
             InitializeElectricalShapes();
             InitializeFloorShapes();
             InitializeNetworkShapes();
-            InitializeSwimlaneShapes();
             await Task.Delay(1).ConfigureAwait(true);
         }
     }

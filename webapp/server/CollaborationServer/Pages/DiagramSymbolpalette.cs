@@ -1500,7 +1500,7 @@ namespace DiagramCollaboration
             }
             };
             FloorPlaneShapesList.Add(FloorPlaneShapes1182);
-            FloorPlaneShapes = new Palette() { ID = "FloorPlaneShapes", IsExpanded = false, Symbols = FloorPlaneShapesList, Title = "Floor Plane Shapes"};
+            FloorPlaneShapes = new Palette() { ID = "FloorPlanShapes", IsExpanded = false, Symbols = FloorPlaneShapesList, Title = "Floor Plan Shapes"};
         }
 
         public void InitializeBpmnShapes()
@@ -1688,58 +1688,6 @@ namespace DiagramCollaboration
 
         }
 
-        public void InitializeSwimlaneShapes()
-        {
-            SwimlaneShapeList = new DiagramObjectCollection<NodeBase>();
-            Lane horizontalLane = new Lane()
-            {
-                ID = "HorizontalSwimlane",
-                Orientation = Orientation.Horizontal,
-                Height = 100,
-                Width = 150,
-                SearchTags = new List<string>() { "Swimlane" },
-                Header = new SwimlaneHeader()
-                {
-                    Annotation = new ShapeAnnotation() { Content = "Lane Title" },
-                    Style = new TextStyle() { Fill = "lightblue", StrokeColor = "black" },
-                    Width = 25,
-                    Height = 100
-                },
-            };
-            SwimlaneShapeList.Add(horizontalLane);
-            Lane verticalLane = new Lane()
-            {
-                ID = "VerticalSwimlane",
-                Orientation = Orientation.Vertical,
-                Height = 150,
-                Width = 100,
-                // Style = new TextStyle() { Fill = "orange", StrokeColor = "black" },
-                SearchTags = new List<string>() { "Swimlane" },
-                Header = new SwimlaneHeader()
-                {
-                    Annotation = new ShapeAnnotation() { Content = "Lane Title" },
-                    Style = new TextStyle() { Fill = "lightblue", StrokeColor = "black" },
-                    Width = 100,
-                    Height = 25
-                },
-            };
-            SwimlaneShapeList.Add(verticalLane);
-
-            //Create a horizontal phase.
-            Phase horizontalPhase = new Phase() { ID = "HorizontalPhase", Orientation = Orientation.Horizontal, 
-                SearchTags = new List<string>() { "Swimlane" },
-                Width = 80, Height = 1, Style = new ShapeStyle() { Fill = "#5b9bd5", StrokeColor = "#5b9bd5" } };
-            SwimlaneShapeList.Add(horizontalPhase);
-
-            //Create a vertical phase.
-            Phase verticalPhase = new Phase() { ID = "VerticalPhase", Orientation = Orientation.Vertical, 
-                SearchTags = new List<string>() { "Swimlane" },
-                Width = 1, Height = 80, Style = new ShapeStyle() { Fill = "#5b9bd5", StrokeColor = "#5b9bd5" } };
-            SwimlaneShapeList.Add(verticalPhase);
-            SwimlaneShapePalette = new Palette() { ID = "SwimlaneShapes", IsExpanded = false, Symbols = SwimlaneShapeList, Title = "Swimlane Shapes"};
-
-        }
-
         internal async Task UpdatePalettes(List<DiagramMoreShapes.ListViewDataFields> SelectedItems)
         {
             DiagramObjectCollection<Palette> addPalettes = new DiagramObjectCollection<Palette>();
@@ -1754,7 +1702,6 @@ namespace DiagramCollaboration
                         {
                             if (!Palettes.Contains(FlowShapePalette))
                                 addPalettes.Add(FlowShapePalette);
-                            PaletteInstance.AddPalettes(addPalettes);
                         }
                         else
                             PaletteInstance.RemovePalettes(FlowShapePalette.ID);
@@ -1764,7 +1711,6 @@ namespace DiagramCollaboration
                         {
                             if (!Palettes.Contains(BasicShapePalette))
                                 addPalettes.Add(BasicShapePalette);
-                            PaletteInstance.AddPalettes(addPalettes);
                         }
                         else
                             PaletteInstance.RemovePalettes(BasicShapePalette.ID);
@@ -1774,7 +1720,6 @@ namespace DiagramCollaboration
                         {
                             if (!Palettes.Contains(BpmnShapePalette))
                                 addPalettes.Add(BpmnShapePalette);
-                            PaletteInstance.AddPalettes(addPalettes);
                         }
                         else
                             PaletteInstance.RemovePalettes(BpmnShapePalette.ID);
@@ -1784,28 +1729,15 @@ namespace DiagramCollaboration
                         {
                             if (!Palettes.Contains(ConnectorPalette))
                                 addPalettes.Add(ConnectorPalette);
-                            PaletteInstance.AddPalettes(addPalettes);
                         }
                         else
                             PaletteInstance.RemovePalettes(ConnectorPalette.ID);
                         break;
-                    case "Swimlane":
-                        if (isChecked)
-                        {
-                            if (!Palettes.Contains(SwimlaneShapePalette))
-                                addPalettes.Add(SwimlaneShapePalette);
-                            PaletteInstance.AddPalettes(addPalettes);
-                        }
-                        else
-                            PaletteInstance.RemovePalettes(SwimlaneShapePalette.ID);
-                        break; 
                     case "Network":
                         if (isChecked)
                         {
                             if (!Palettes.Contains(NetworkShapes))
                                 addPalettes.Add(NetworkShapes);
-                            PaletteInstance.AddPalettes(addPalettes);
-
                         }
                         else
                             PaletteInstance.RemovePalettes(NetworkShapes.ID);
@@ -1815,7 +1747,6 @@ namespace DiagramCollaboration
                         {
                             if (!Palettes.Contains(ElectericalShapes))
                                 addPalettes.Add(ElectericalShapes);
-                            PaletteInstance.AddPalettes(addPalettes);
                         }
                         else
                             PaletteInstance.RemovePalettes(ElectericalShapes.ID);
@@ -1825,7 +1756,6 @@ namespace DiagramCollaboration
                         {
                             if (!Palettes.Contains(FloorPlaneShapes))
                                 addPalettes.Add(FloorPlaneShapes);
-                            PaletteInstance.AddPalettes(addPalettes);
                         }
                         else
                             PaletteInstance.RemovePalettes(FloorPlaneShapes.ID);
