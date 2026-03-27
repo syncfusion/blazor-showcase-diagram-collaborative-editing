@@ -47,14 +47,14 @@ namespace SignalRServer.Hubs
             {
                 if (connectionId == Context.ConnectionId) continue;
                 // Get current user's selection event from Redis
-                var currentEvent = await _redisService.GetAsync<SelectionEvent>(SelectionKey(connectionId, roomName));
+                SelectionEvent currentEvent = await _redisService.GetAsync<SelectionEvent>(SelectionKey(connectionId, roomName));
                 if (currentEvent == null)
                     return;
                 if (currentEvent.ElementIds != null && currentEvent.ElementIds.ToHashSet().SetEquals(elementIds))
                 {
                     if (!IsEqual(currentEvent.SelectorBounds?.Bounds, newBounds.Bounds) || currentEvent.SelectorBounds.RotationAngle != newBounds.RotationAngle)
                     {
-                        var updatedEvent = new SelectionEvent
+                        SelectionEvent updatedEvent = new SelectionEvent
                         {
                             ConnectionId = currentEvent.ConnectionId,
                             UserId = currentEvent.UserId,
@@ -115,15 +115,15 @@ namespace SignalRServer.Hubs
         {
             string roomName = this.Context.Items["RoomName"].ToString();
             await Clients.Group(roomName).SendAsync("ClearAllSelection");
-            var availableSelections = await _redisService.GetByPatternAsync<SelectionEvent>($"diagram_{roomName}:selections_*");
-            foreach (var selection in availableSelections)
+            List<SelectionEvent> availableSelections = await _redisService.GetByPatternAsync<SelectionEvent>($"diagram_{roomName}:selections_*");
+            foreach (SelectionEvent selection in availableSelections)
             {
                 await _redisService.DeleteAsync(SelectionKey(selection.ConnectionId, roomName));
             }
         }
         public async Task SendCurrentSelectionsToCaller(string roomName)
         {
-            var map = await _redisService.GetByPatternAsync<SelectionEvent>($"diagram_{roomName}:selections_*");
+            List<SelectionEvent> map = await _redisService.GetByPatternAsync<SelectionEvent>($"diagram_{roomName}:selections_*");
             if (map.Count > 0)
                 await Clients.Caller.SendAsync("PeerSelectionsBootstrap", map);
         }
@@ -137,28 +137,28 @@ namespace SignalRServer.Hubs
         }
         public async Task BroadcastToOtherClients(List<string> payloads, long clientVersion, List<string>? elementIds, SelectionEvent currentSelection, string roomName)
         {
-            var connId = Context.ConnectionId;
-            var gate = GetConnectionLock(connId);
+            string connId = Context.ConnectionId;
+            SemaphoreSlim gate = GetConnectionLock(connId);
             await gate.WaitAsync();
             try
             {
-                var versionKey = $"diagram_{roomName}:version";
+                string versionKey = $"diagram_{roomName}:version";
 
-                var (acceptedSingle, serverVersionSingle) = await _redisService.CompareAndIncrementAsync(versionKey, clientVersion);
+                (bool acceptedSingle, long serverVersionSingle) = await _redisService.CompareAndIncrementAsync(versionKey, clientVersion);
                 long serverVersionFinal = serverVersionSingle;
 
                 if (!acceptedSingle)
                 {
-                    var recentUpdates = await GetUpdatesSinceVersionAsync(clientVersion, roomName, maxScan: 200);
-                    var recentlyTouched = new HashSet<string>(StringComparer.Ordinal);
-                    foreach (var upd in recentUpdates)
+                    IReadOnlyList<DiagramUpdateMessage> recentUpdates = await GetUpdatesSinceVersionAsync(clientVersion, roomName, maxScan: 200);
+                    HashSet<string> recentlyTouched = new HashSet<string>(StringComparer.Ordinal);
+                    foreach (DiagramUpdateMessage upd in recentUpdates)
                     {
                         if (upd.ModifiedElementIds == null) continue;
-                        foreach (var id in upd.ModifiedElementIds)
+                        foreach (string id in upd.ModifiedElementIds)
                             recentlyTouched.Add(id);
                     }
 
-                    var overlaps = elementIds?.Where(id => recentlyTouched.Contains(id)).Distinct().ToList();
+                    List<string> overlaps = elementIds?.Where(id => recentlyTouched.Contains(id)).Distinct().ToList();
                     if (overlaps?.Count > 0)
                     {
                         await Clients.Caller.SendAsync("RevertCurrentChanges", elementIds);
@@ -166,11 +166,11 @@ namespace SignalRServer.Hubs
                         return;
                     }
 
-                    var (_, newServerVersion) = await _redisService.CompareAndIncrementAsync(versionKey, serverVersionSingle);
+                    (bool _, long newServerVersion) = await _redisService.CompareAndIncrementAsync(versionKey, serverVersionSingle);
                     serverVersionFinal = newServerVersion;
                 }
 
-                var update = new DiagramUpdateMessage
+                DiagramUpdateMessage update = new DiagramUpdateMessage
                 {
                     SourceConnectionId = connId,
                     Version = serverVersionFinal,
@@ -193,16 +193,16 @@ namespace SignalRServer.Hubs
         {
             // Keep only versions > (finalVersion - window)
             int historyKeepWindow = 2;
-            var minVersionToKeep = Math.Max(0, currentServerVersion - historyKeepWindow);
+            long minVersionToKeep = Math.Max(0, currentServerVersion - historyKeepWindow);
             await TrimHistoryFullScanAsync(minVersionToKeep, roomName);
         }
         private async Task TrimHistoryFullScanAsync(long minVersionToKeep, string roomName)
         {
             string HISTORY_KEY = $"diagram_{roomName}_updates_history";
-            var length = await _redisService.ListLengthAsync(HISTORY_KEY);
+            long length = await _redisService.ListLengthAsync(HISTORY_KEY);
             if (length <= 0) return;
 
-            var all = await _redisService.ListRangeAsync(HISTORY_KEY, 0, -1);
+            StackExchange.Redis.RedisValue[] all = await _redisService.ListRangeAsync(HISTORY_KEY, 0, -1);
             if (all == null || all.Length == 0)
             {
                 await _redisService.DeleteAsync(HISTORY_KEY);
@@ -212,12 +212,12 @@ namespace SignalRServer.Hubs
             int cutIndex = -1;
             for (int i = 0; i < all.Length; i++)
             {
-                var item = all[i];
+                StackExchange.Redis.RedisValue item = all[i];
                 if (item.IsNullOrEmpty) continue;
 
                 try
                 {
-                    var update = JsonSerializer.Deserialize<DiagramUpdateMessage>(item.ToString());
+                    DiagramUpdateMessage? update = JsonSerializer.Deserialize<DiagramUpdateMessage>(item.ToString());
                     if (update != null && update.Version <= minVersionToKeep)
                     {
                         cutIndex = i;
@@ -244,21 +244,21 @@ namespace SignalRServer.Hubs
         private async Task<IReadOnlyList<DiagramUpdateMessage>> GetUpdatesSinceVersionAsync(long sinceVersion, string roomName, int maxScan = 200)
         {
             var historyKey = $"diagram_{roomName}_updates_history";
-            var length = await _redisService.ListLengthAsync(historyKey);
+            long length = await _redisService.ListLengthAsync(historyKey);
             if (length == 0) return Array.Empty<DiagramUpdateMessage>();
 
             long start = Math.Max(0, length - maxScan);
             long end = length - 1;
 
-            var range = await _redisService.ListRangeAsync(historyKey, start, end);
+            StackExchange.Redis.RedisValue[] range = await _redisService.ListRangeAsync(historyKey, start, end);
 
-            var results = new List<DiagramUpdateMessage>(range.Length);
-            foreach (var item in range)
+            List<DiagramUpdateMessage> results = new List<DiagramUpdateMessage>(range.Length);
+            foreach (StackExchange.Redis.RedisValue item in range)
             {
                 if (item.IsNullOrEmpty) continue;
                 try
                 {
-                    var update = JsonSerializer.Deserialize<DiagramUpdateMessage>(item.ToString());
+                    DiagramUpdateMessage? update = JsonSerializer.Deserialize<DiagramUpdateMessage>(item.ToString());
                     if (update is not null && update.Version > sinceVersion && update.SourceConnectionId != Context.ConnectionId)
                         results.Add(update);
                 }
@@ -275,7 +275,7 @@ namespace SignalRServer.Hubs
             try
             {
                 // Store in updates history list
-                var historyKey = $"diagram_{roomName}_updates_history";
+                string historyKey = $"diagram_{roomName}_updates_history";
                 await _redisService.ListPushAsync(historyKey, updateMessage);
             }
             catch (Exception ex)
@@ -292,7 +292,7 @@ namespace SignalRServer.Hubs
 
         public Task ProvideDiagramState(string requestId, string jsonData)
         {
-            if (_pendingStateRequests.TryRemove(requestId, out var tcs))
+            if (_pendingStateRequests.TryRemove(requestId, out TaskCompletionSource<string>? tcs))
             {
                 tcs.TrySetResult(jsonData);
             }
@@ -300,8 +300,8 @@ namespace SignalRServer.Hubs
         }
         private async Task RequestAndLoadStateAsync(string roomName, string diagramId, string replyToConnectionId, CancellationToken connectionAborted)
         {
-            var requestId = Guid.NewGuid().ToString("N");
-            var tcs = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+            string requestId = Guid.NewGuid().ToString("N");
+            TaskCompletionSource<string> tcs = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
             _pendingStateRequests[requestId] = tcs;
 
             try
@@ -319,8 +319,8 @@ namespace SignalRServer.Hubs
             string? json = null;
             try
             {
-                var responseTask = tcs.Task;
-                var completed = await Task.WhenAny(responseTask, Task.Delay(timeoutMs, connectionAborted));
+                Task<string> responseTask = tcs.Task;
+                Task completed = await Task.WhenAny(responseTask, Task.Delay(timeoutMs, connectionAborted));
                 if (completed == responseTask)
                 {
                     json = await responseTask;
@@ -334,7 +334,7 @@ namespace SignalRServer.Hubs
 
             if (!string.IsNullOrEmpty(json))
             {
-                var savedBy = replyToConnectionId;
+                string savedBy = replyToConnectionId;
                 await _diagramService.SaveDiagramDataAsync(diagramId, roomName, json, savedBy);
 
                 await _diagramHubContext.Clients.Client(replyToConnectionId).SendAsync("LoadDiagramData", new DiagramData
@@ -345,7 +345,7 @@ namespace SignalRServer.Hubs
                 }, cancellationToken: connectionAborted);
                 return;
             }
-            var data = await _diagramService.GetDiagramAsync(diagramId, roomName);
+            DiagramData data = await _diagramService.GetDiagramAsync(diagramId, roomName);
             if (data != null && !string.IsNullOrEmpty(data.Data))
             {
                 await _diagramHubContext.Clients.Client(replyToConnectionId).SendAsync("LoadDiagramData", new DiagramData
@@ -395,7 +395,7 @@ namespace SignalRServer.Hubs
                     userName = next.ToString();
                 }
                 Context.Items["UserName"] = userName;
-                var diagramUser = new DiagramUser
+                DiagramUser diagramUser = new DiagramUser
                 {
                     ConnectionId = Context.ConnectionId,
                     UserName = userName,
@@ -445,9 +445,9 @@ namespace SignalRServer.Hubs
         }
         public async Task<long> GetDiagramVersion(string roomName)
         {
-            var versionKey = $"diagram_{roomName}:version";
+            string versionKey = $"diagram_{roomName}:version";
             // Use CAS with expected = -1 to read current version without incrementing
-            var (_, currentVersion) = await _redisService.CompareAndIncrementAsync(versionKey, -1);
+            (bool _, long currentVersion) = await _redisService.CompareAndIncrementAsync(versionKey, -1);
             return currentVersion; // 0 if not set
         }
         public async Task ClearConnectionsFromRedis(string roomName)
@@ -457,14 +457,14 @@ namespace SignalRServer.Hubs
                 string diagramId = Context.Items["DiagramId"].ToString();
                 string diagramUpdateHistoryKey = $"diagram_{roomName}_updates_history";
                 string diagramVersionKey = $"diagram_{roomName}:version";
-                var userId = Context.Items["UserId"]?.ToString();
+                string? userId = Context.Items["UserId"]?.ToString();
 
                 await _diagramService.SaveDiagramDataAsync(diagramId, roomName, string.Empty, userId);
                 await _redisService.DeleteAsync(diagramUpdateHistoryKey);
                 await _redisService.DeleteAsync(diagramVersionKey);
 
-                var availableSelections = await _redisService.GetByPatternAsync<SelectionEvent>($"diagram_{roomName}:selections_*");
-                foreach (var selection in availableSelections)
+                List<SelectionEvent> availableSelections = await _redisService.GetByPatternAsync<SelectionEvent>($"diagram_{roomName}:selections_*");
+                foreach (SelectionEvent selection in availableSelections)
                 {
                     await _redisService.DeleteAsync(SelectionKey(selection.ConnectionId, roomName));
                 }

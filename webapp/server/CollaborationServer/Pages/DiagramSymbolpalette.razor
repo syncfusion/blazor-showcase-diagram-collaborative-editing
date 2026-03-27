@@ -1,0 +1,89 @@
+@using Syncfusion.Blazor.Navigations
+@using Syncfusion.Blazor.Diagram
+@using Syncfusion.Blazor.Diagram.SymbolPalette
+@using System.Collections.ObjectModel
+
+@namespace DiagramCollaboration
+
+<div class="db-palette-parent">
+
+    <SfSymbolPaletteComponent @ref="@PaletteInstance" Width="100%" Height="100%" SymbolHeight="@symbolSizeHeight" ShowSearchTextBox="true" SymbolWidth="@symbolSizeWidth" GetSymbolInfo="GetSymbolInfo"
+                     Palettes="@Palettes" SymbolDragPreviewSize="@SymbolPreview" SymbolMargin="@SymbolMargin">
+    </SfSymbolPaletteComponent>
+</div>
+
+    @code {
+
+    internal DiagramLeftSideBar Parent;        
+    SfSymbolPaletteComponent PaletteInstance;
+    DiagramSize SymbolPreview;
+    SymbolMargin SymbolMargin = new SymbolMargin { Left = 10, Right = 10, Top = 10, Bottom = 10 };
+    double symbolSizeWidth;
+    double symbolSizeHeight;
+    DiagramObjectCollection<Palette> Palettes { get; set; }
+    public Palette FlowShapePalette { get; set; }
+    public Palette BasicShapePalette { get; set; }
+    public Palette BpmnShapePalette { get; set; }
+    public Palette SwimlaneShapePalette { get; set; }
+    public Palette ConnectorPalette { get; set; }
+    public Palette ElectericalShapes { get; set; }
+    public Palette NetworkShapes { get; set; }
+    public Palette FloorPlaneShapes { get; set; }
+    public DiagramObjectCollection<NodeBase> FlowShapeList { get; set; }
+    public DiagramObjectCollection<NodeBase> BasicShapeList { get; set; }
+    public DiagramObjectCollection<NodeBase> ConnectorList { get; set; }
+    public DiagramObjectCollection<NodeBase> BPMNShapeList { get; set; }
+    public DiagramObjectCollection<NodeBase> ElectricalShapeList { get; set; }
+    public DiagramObjectCollection<NodeBase> SwimlaneShapeList { get; set; }
+    public DiagramObjectCollection<NodeBase> NetworkShapesList { get; set; }
+    public DiagramObjectCollection<NodeBase> FloorPlaneShapesList { get; set; }
+
+    protected override void OnInitialized()
+    {
+        symbolSizeWidth = 50;
+        symbolSizeHeight = 50;   
+        SymbolPreview = new DiagramSize();
+        SymbolPreview.Width = 100;
+        SymbolPreview.Height = 100;
+        InitializePalettes();
+        FlowShapePalette = new Palette() { Symbols = FlowShapeList, Title = "Flow Shapes", ID = "FlowShapes"};
+        BasicShapePalette = new Palette() { Symbols = BasicShapeList, Title = "Basic Shapes", ID = "BasicShapes"};
+        ConnectorPalette = new Palette() { Symbols = ConnectorList, Title = "Connectors", ID = "ConnectorShapes"};
+        BpmnShapePalette = new Palette() { Symbols = BPMNShapeList, Title = "BPMN Shapes", ID = "BPMNShapes" };
+        Palettes = new DiagramObjectCollection<Palette>();
+        Palettes.Add(FlowShapePalette);
+        Palettes.Add(BasicShapePalette);
+        Palettes.Add(BpmnShapePalette);
+        Palettes.Add(ConnectorPalette);
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        PaletteInstance.Targets = new DiagramObjectCollection<SfDiagramComponent>() { };
+
+        PaletteInstance.Targets.Add(Parent.Parent.DiagramInstance);
+        if (firstRender)
+        {
+            InitializeBpmnShapes();
+            InitializeElectricalShapes();
+            InitializeFloorShapes();
+            InitializeNetworkShapes();
+            InitializeSwimlaneShapes();
+            await Task.Delay(1).ConfigureAwait(true);
+        }
+    }
+    private SymbolInfo GetSymbolInfo(IDiagramObject symbol)
+    {
+        SymbolInfo SymbolInfo = new SymbolInfo();
+        SymbolInfo.Fit = true;
+        string text = null;
+        if (symbol is Node)
+        {
+            text = ((symbol as Node).Shape as Shape).Type.ToString() + (symbol as Node).ID;
+        }
+        else if (symbol is Connector)
+        {
+            text = "connectors" + (symbol as Connector).ID;
+        }
+        return SymbolInfo;
+    }
+}
