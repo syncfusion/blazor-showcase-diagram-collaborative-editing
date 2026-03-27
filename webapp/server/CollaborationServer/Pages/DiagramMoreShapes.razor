@@ -39,6 +39,7 @@
     SfDialog MoreShapesPalette;
     SfListView<ListViewDataFields> MoreShapesList;
     List<ListViewDataFields> SelectedItems = new List<ListViewDataFields>();
+    Dictionary<string, bool> BackupCheckedStates = new Dictionary<string, bool>();
     bool MoreShapesVisible = false;
     string ShapeImageLoaction = "./assets/dbstyle/shapes_images/flow.png";
     string BackgroundImage = "background-image: url(./assets/dbstyle/shapes_images/flow.png);";
@@ -58,13 +59,14 @@
         new ListViewDataFields(){ Text= "BPMN", Id="bpmnShapes", Checked= true },
         new ListViewDataFields(){ Text= "Connectors", Id="connectorsShapes", Checked= true },
         new ListViewDataFields(){ Text= "Electrical", Id="ElectricalShapes", Checked= false },
-        new ListViewDataFields(){ Text= "Swimlane", Id="swimlaneShapes", Checked= false },
         new ListViewDataFields(){ Text= "Network", Id="networksShapes", Checked= false },
         new ListViewDataFields(){ Text= "Floorplan", Id="floorplansShapes", Checked= false },
     };
 
     private void MoreShapesClick()
     {
+        // snapshot current checked state so Cancel can restore it
+        BackupCheckedStates = ListViewData.ToDictionary(x => x.Text, x => x.Checked);
         MoreShapesVisible = true;
     }
     private void ListViewSelectionChange(Syncfusion.Blazor.Lists.ClickEventArgs<ListViewDataFields> args)
@@ -90,10 +92,32 @@
         Parent.Parent.DiagramSpinnerObj.Show();
         await Parent.DiagramSymbolpalette.UpdatePalettes(SelectedItems);
         Parent.Parent.DiagramSpinnerObj.Hide();
+        // clear backup after applying changes
+        BackupCheckedStates.Clear();
         await MoreShapesPalette.HideAsync();
     }
     private async Task btnCancelClick()
     {
+        // restore checked states from backup when user cancels
+        if (BackupCheckedStates != null && BackupCheckedStates.Count > 0)
+        {
+            SelectedItems.Clear();
+            foreach (var item in ListViewData)
+            {
+                if (BackupCheckedStates.TryGetValue(item.Text, out var wasChecked))
+                {
+                    item.Checked = wasChecked;
+                }
+                else
+                {
+                    item.Checked = false;
+                }
+                if (item.Checked)
+                {
+                    SelectedItems.Add(item);
+                }
+            }
+        }
         await MoreShapesPalette.HideAsync();
     }
 }

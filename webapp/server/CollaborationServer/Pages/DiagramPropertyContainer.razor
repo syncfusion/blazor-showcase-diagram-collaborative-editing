@@ -399,11 +399,11 @@
                 Insert Link
             </Header>
             <Content>
-                <div id="hyperlinkDialogContent">
-                    <div class="row">
-                        <SfTextBox ID="hyperlink" value="@ValueLink" ValueChange="@ValueLinkChanged" Input="@InputHandler" Placeholder="Enter URL" FloatLabelType="@FloatLabelType.Always"></SfTextBox>
+                <div id="hyperlinkDialogContent" style="padding:20px 15px;">
+                    <div class="row" >
+                        <SfTextBox ID="hyperlink" value="@ValueLink" ValueChange="@ValueLinkChanged" Input="@InputHandler" Placeholder="Enter URL" FloatLabelType="@FloatLabelType.Always" CssClass="e-dialog-input"></SfTextBox>
                     </div>
-                    <div class="row db-dialog-prop-row">
+                    <div class="row db-dialog-prop-row" >
                         <SfTextBox ID="hyperlinkText" value="@ValueText" ValueChange="@ValueTextChanged" Input="@InputHandler" Placeholder="Link Text (Optional)" FloatLabelType="@FloatLabelType.Always" CssClass="e-dialog-input"></SfTextBox>
                     </div>
                 </div>
@@ -1394,11 +1394,28 @@
     private async Task InsertLink()
     {
         ObservableCollection<Node> Nodes = OnSelectedNode();
-        for (int i = 0; i < Nodes.Count; i++)
+        // Populate dialog fields from the first selected node (if any) so content is clear
+        if (Nodes.Count > 0)
         {
-            Node Node = Nodes[i];
-            if (Node != null)
+            Node node = Nodes[0];
+            if (node != null)
             {
+                if (node.Annotations != null && node.Annotations.Count > 0 && node.Annotations[0].Hyperlink != null)
+                {
+                    ValueLink = node.Annotations[0].Hyperlink.Url ?? string.Empty;
+                    ValueText = node.Annotations[0].Hyperlink.Content ?? node.Annotations[0].Content ?? string.Empty;
+                }
+                else
+                {
+                    ValueLink = string.Empty;
+                    ValueText = string.Empty;
+                }
+                // Update the inputs in the dialog DOM (interop helper)
+                await jsRuntime.InvokeVoidAsync("setHyperLinkValuesToDocument", "hyperlink", ValueLink ?? string.Empty);
+                await jsRuntime.InvokeVoidAsync("setHyperLinkValuesToDocument", "hyperlinkText", ValueText ?? string.Empty);
+                // Enable Apply only when URL exists
+                disable = string.IsNullOrWhiteSpace(ValueLink);
+                StateHasChanged();
                 await TextHyperLink.ShowAsync();
             }
         }
@@ -1416,10 +1433,13 @@
 
     private async void InputHandler(InputEventArgs args)
     {
+        // Read current values from dialog inputs and enable Apply when a URL is present.
         string HyperLink = await jsRuntime.InvokeAsync<string>("getHyperLinkValueFromDocument", "hyperlink", "value");
         string HyperLinkText = await jsRuntime.InvokeAsync<string>("getHyperLinkValueFromDocument", "hyperlinkText", "value");
-        bool validUrl = !string.IsNullOrEmpty(HyperLink);
-        disable = !(validUrl && !string.IsNullOrWhiteSpace(HyperLinkText));
+        ValueLink = HyperLink ?? string.Empty;
+        ValueText = HyperLinkText ?? string.Empty;
+        // Link text is optional — enable apply when URL has content
+        disable = string.IsNullOrWhiteSpace(ValueLink);
         StateHasChanged();
     }
     private async Task InsertImage()
@@ -1444,23 +1464,35 @@
     {
         SfDiagramComponent Diagram = Parent.DiagramInstance;
         ObservableCollection<Node> Nodes = OnSelectedNode();
+        string HyperLink = await jsRuntime.InvokeAsync<string>("getHyperLinkValueFromDocument", "hyperlink", "value");
+        string HyperLinkText = await jsRuntime.InvokeAsync<string>("getHyperLinkValueFromDocument", "hyperlinkText", "value");
+        string hyperlinkContent = !string.IsNullOrEmpty(HyperLinkText) ? HyperLinkText : HyperLink;
         for (int i = 0; i < Nodes.Count; i++)
         {
-            if (Nodes[i].Annotations.Count > 0)
+            Node node = Nodes[i];
+            if (node == null) continue;
+            if (node.Annotations == null || node.Annotations.Count == 0)
             {
-                ShapeAnnotation Annotation = Nodes[i].Annotations[0];
-                string HyperLink = await jsRuntime.InvokeAsync<string>("getHyperLinkValueFromDocument", "hyperlink", "value");
-                string HyperLinkText = await jsRuntime.InvokeAsync<string>("getHyperLinkValueFromDocument", "hyperlinkText", "value");
-                string hyperlinkContent = (HyperLinkText != "") ? HyperLinkText : HyperLink;
-                if (Nodes[i].Annotations.Count == 0)
-                    Nodes[i].Annotations = new DiagramObjectCollection<ShapeAnnotation>() { new ShapeAnnotation() { Hyperlink = new Syncfusion.Blazor.Diagram.HyperlinkSettings() { Url = HyperLink, Content = HyperLinkText }, Content = hyperlinkContent } };
-                if (Nodes[i].Annotations.Count > 0)
+                // create new annotation with hyperlink
+                ShapeAnnotation annotation = new ShapeAnnotation()
                 {
-                    if (Nodes[i].Annotations[0].Hyperlink == null)
-                        Nodes[i].Annotations = new DiagramObjectCollection<ShapeAnnotation>() { new ShapeAnnotation() { Hyperlink = new HyperlinkSettings() { Url = "", Content = "" } } };
-                }
+                    Content = hyperlinkContent,
+                    Hyperlink = new HyperlinkSettings() { Url = HyperLink ?? string.Empty, Content = HyperLinkText ?? string.Empty }
+                };
+                node.Annotations = new DiagramObjectCollection<ShapeAnnotation>() { annotation };
+            }
+            else
+            {
+                // update existing annotation
+                ShapeAnnotation annotation = node.Annotations[0];
+                annotation.Hyperlink = new HyperlinkSettings() { Url = HyperLink ?? string.Empty, Content = HyperLinkText ?? string.Empty };
+                annotation.Content = hyperlinkContent;
             }
         }
+        // ensure property panel reflects newly added/updated annotation
+        PanelVisibility();
+        SingleNodeSelection();
+        StateHasChanged();
         await TextHyperLink.HideAsync();
     }
 
