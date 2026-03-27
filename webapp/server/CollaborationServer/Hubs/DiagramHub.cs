@@ -171,7 +171,6 @@ namespace SignalRServer.Hubs
                 await StoreUpdateInRedis(update, connId);
                 SelectionEvent selectionEvent = BuildSelectedElementEvent(currentSelection.ElementIds, currentSelection.SelectorBounds);
                 await UpdateSelectionBoundsInRedis(selectionEvent, currentSelection.ElementIds, currentSelection.SelectorBounds);
-                await Clients.Caller.SendAsync("UpdateVersion", serverVersionFinal);
                 await Clients.OthersInGroup(roomName).SendAsync("ReceiveData", payloads, serverVersionFinal, selectionEvent);
                 await RemoveOldUpdates(serverVersionFinal);
             }
