@@ -243,7 +243,7 @@ namespace SignalRServer.Hubs
         }
         private async Task<IReadOnlyList<DiagramUpdateMessage>> GetUpdatesSinceVersionAsync(long sinceVersion, string roomName, int maxScan = 200)
         {
-            var historyKey = $"diagram_{roomName}_updates_history";
+            string historyKey = $"diagram_{roomName}_updates_history";
             long length = await _redisService.ListLengthAsync(historyKey);
             if (length == 0) return Array.Empty<DiagramUpdateMessage>();
 
