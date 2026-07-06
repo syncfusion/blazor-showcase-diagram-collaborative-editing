@@ -1,13 +1,9 @@
 using DiagramCollaboration.Components;
 using DiagramCollaboration.Shared;
-using Microsoft.AspNetCore.Localization;
-using Microsoft.Extensions.Options;
 using SignalRServer.Hubs;
 using SignalRServer.Services;
 using StackExchange.Redis;
 using Syncfusion.Blazor;
-using Syncfusion.Blazor.Popups;
-using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,6 +30,10 @@ builder.Services.AddSignalR(options =>
     options.MaximumParallelInvocationsPerClient = 2;
     options.HandshakeTimeout = TimeSpan.FromMinutes(1);
 })
+.AddStackExchangeRedis(builder.Configuration.GetConnectionString("Redis"), options =>
+{
+    options.Configuration.ChannelPrefix = "diagramHub";
+})
 .AddJsonProtocol(options =>
 {
     options.PayloadSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
@@ -47,6 +47,19 @@ builder.Services.AddLogging(logging =>
     logging.AddDebug();
     logging.SetMinimumLevel(LogLevel.Information);
 });
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy
+            .SetIsOriginAllowed(_ => true)
+            .AllowAnyMethod()        
+            .AllowAnyHeader()       
+            .AllowCredentials();   
+    });
+});
+
 builder.Services.AddSyncfusionBlazor();
 var app = builder.Build();
 
@@ -65,7 +78,7 @@ app.UsePathBase("/development/showcase/collaborative-diagram-editing");
 app.UseHttpsRedirection();
 app.MapStaticAssets();
 app.UseRouting();
-
+app.UseCors("AllowAll");
 app.MapHub<DiagramHub>("/diagramHub").DisableAntiforgery();
 
 app.MapRazorComponents<App>()

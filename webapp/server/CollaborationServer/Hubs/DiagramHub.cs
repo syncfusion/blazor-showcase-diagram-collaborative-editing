@@ -3,7 +3,6 @@ using Microsoft.Extensions.Logging;
 using SignalRServer.Models;
 using SignalRServer.Services;
 using System.Collections.Concurrent;
-using System.Linq;
 using System.Text.Json;
 namespace SignalRServer.Hubs
 {
@@ -40,19 +39,21 @@ namespace SignalRServer.Hubs
 
         public async Task UpdateSameElementHighlighterBounds(List<string> elementIds, SelectorBounds newBounds, string roomName)
         {
-            if (!_roomUsers.TryGetValue(roomName, out var roomDict))
+            // Get all users in the room from Redis
+            var roomUsers = await GetCurrentUsersInRoomAsync(roomName);
+            if (roomUsers.Count == 0)
                 return;
 
-            foreach (string connectionId in roomDict.Keys)
+            foreach (var user in roomUsers)
             {
-                if (connectionId == Context.ConnectionId) continue;
+                if (user.ConnectionId == Context.ConnectionId) continue;
                 // Get current user's selection event from Redis
-                SelectionEvent currentEvent = await _redisService.GetAsync<SelectionEvent>(SelectionKey(connectionId, roomName));
+                SelectionEvent currentEvent = await _redisService.GetAsync<SelectionEvent>(SelectionKey(user.ConnectionId, roomName));
                 if (currentEvent == null)
-                    return;
+                    continue;
                 if (currentEvent.ElementIds != null && currentEvent.ElementIds.ToHashSet().SetEquals(elementIds))
                 {
-                    if (!IsEqual(currentEvent.SelectorBounds?.Bounds, newBounds.Bounds) || currentEvent.SelectorBounds.RotationAngle != newBounds.RotationAngle)
+                    if (!IsEqual(currentEvent.SelectorBounds?.Bounds, newBounds?.Bounds) || currentEvent.SelectorBounds?.RotationAngle != newBounds?.RotationAngle)
                     {
                         SelectionEvent updatedEvent = new SelectionEvent
                         {
@@ -345,7 +346,7 @@ namespace SignalRServer.Hubs
                 }, cancellationToken: connectionAborted);
                 return;
             }
-            DiagramData data = await _diagramService.GetDiagramAsync(diagramId, roomName);
+            DiagramData? data = await _diagramService.GetDiagramAsync(diagramId, roomName);
             if (data != null && !string.IsNullOrEmpty(data.Data))
             {
                 await _diagramHubContext.Clients.Client(replyToConnectionId).SendAsync("LoadDiagramData", new DiagramData
@@ -381,17 +382,18 @@ namespace SignalRServer.Hubs
                 Context.Items["UserId"] = userId;
                 Context.Items["RoomName"] = roomName;
 
-                // If there are no users in this room yet, determine count and clear Redis for a fresh start
-                var existingRoomUsersCount = 0;
-                if (_roomUsers.TryGetValue(roomName, out var existingRoomDict))
-                    existingRoomUsersCount = existingRoomDict.Count;
+                // Check existing users in Redis (cross-server consistent)
+                var existingRoomUsersCount = await GetRoomUserCountAsync(roomName);
                 if (existingRoomUsersCount == 0)
+                {
                     await ClearConnectionsFromRedis(roomName);
+                    await ResetRoomCountersAsync(roomName);
+                }
 
-                // Track user in diagram
+                // Track user in diagram - use Redis counter for cross-server consistency
                 if (string.IsNullOrEmpty(userName))
                 {
-                    long next = _roomNextUserNumber.AddOrUpdate(roomName, existingRoomUsersCount + 1, (k, v) => v + 1);
+                    long next = await GetNextUserNumberAsync(roomName);
                     userName = next.ToString();
                 }
                 Context.Items["UserName"] = userName;
@@ -401,8 +403,8 @@ namespace SignalRServer.Hubs
                     UserName = userName,
                 };
 
-                var roomDict = _roomUsers.GetOrAdd(roomName, _ => new ConcurrentDictionary<string, DiagramUser>(StringComparer.Ordinal));
-                roomDict[userId] = diagramUser;
+                // Store in Redis and local cache
+                await AddUserToRoomAsync(roomName, userId, diagramUser);
 
                 await RequestAndLoadStateAsync(roomName, diagramId, Context.ConnectionId, Context.ConnectionAborted);
 
@@ -410,16 +412,28 @@ namespace SignalRServer.Hubs
                 await Clients.Caller.SendAsync("UpdateVersion", currentServerVersion);
                 await Clients.OthersInGroup(roomName).SendAsync("UserJoined", userName);
                 await SendCurrentSelectionsToCaller(roomName);
-                List<string> activeUsers = GetCurrentUsers(roomName);
+                List<string> activeUsers = await GetCurrentUsersAsync(roomName);
                 await Clients.Group(roomName).SendAsync("CurrentUsers", activeUsers);
-                var totalUsers = _roomUsers.Values.Sum(d => d.Count);
-                _logger.LogInformation("User {UserId} ({UserName}) joined diagram {DiagramId}. Total users: {UserCount}", userId, userName, diagramId, totalUsers);
+                var totalUsers = await GetRoomUserCountAsync(roomName);
+                _logger.LogInformation("User {UserId} ({UserName}) joined diagram {DiagramId}. Room users: {UserCount}", userId, userName, diagramId, totalUsers);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error joining diagram {DiagramId} for user {UserId}", diagramId, Context.ConnectionId);
                 await Clients.Caller.SendAsync("JoinError", "Failed to join diagram");
             }
+        }
+        private async Task<List<string>> GetCurrentUsersAsync(string roomName)
+        {
+            var usersKey = $"diagram_{roomName}:users";
+            var users = await _redisService.GetByPatternAsync<DiagramUser>($"{usersKey}:*");
+            return users.Select(u => u.UserName).ToList();
+        }
+
+        private async Task<List<DiagramUser>> GetCurrentUsersInRoomAsync(string roomName)
+        {
+            var usersKey = $"diagram_{roomName}:users";
+            return await _redisService.GetByPatternAsync<DiagramUser>($"{usersKey}:*");
         }
         public async Task LoadDiagram(string data)
         {
@@ -431,17 +445,45 @@ namespace SignalRServer.Hubs
             };
             await Clients.OthersInGroup(roomName).SendAsync("LoadDiagramData", dataToSend);
         }
-        private List<string> GetCurrentUsers(string? roomName)
+        private async Task<long> GetNextUserNumberAsync(string roomName)
         {
-            if (string.IsNullOrEmpty(roomName))
-            {
-                return _roomUsers.Values.SelectMany(d => d.Values).Select(u => u.UserName).ToList();
-            }
+            string counterKey = $"diagram_{roomName}:user_counter";
+            return await _redisService.IncrementAsync(counterKey);
+        }
+
+        private async Task AddUserToRoomAsync(string roomName, string connectionId, DiagramUser user)
+        {
+            string userKey = $"diagram_{roomName}:users:{connectionId}";
+            await _redisService.SetAsync(userKey, user);
+
+            var roomDict = _roomUsers.GetOrAdd(roomName, _ => new ConcurrentDictionary<string, DiagramUser>(StringComparer.Ordinal));
+            roomDict[connectionId] = user;
+        }
+
+        private async Task<bool> RemoveUserFromRoomAsync(string roomName, string connectionId)
+        {
+            var userKey = $"diagram_{roomName}:users:{connectionId}";
+            await _redisService.DeleteAsync(userKey);
+
+            // Remove from local cache
             if (_roomUsers.TryGetValue(roomName, out var roomDict))
             {
-                return roomDict.Values.Select(u => u.UserName).ToList();
+                return roomDict.TryRemove(connectionId, out _);
             }
-            return new List<string>();
+            return false;
+        }
+
+        private async Task<int> GetRoomUserCountAsync(string roomName)
+        {
+            List<DiagramUser> users = await _redisService.GetByPatternAsync<DiagramUser>($"diagram_{roomName}:users:*");
+            return users.Count;
+        }
+
+        private async Task ResetRoomCountersAsync(string roomName)
+        {
+            string counterKey = $"diagram_{roomName}:user_counter";
+            await _redisService.DeleteAsync(counterKey);
+            _roomNextUserNumber.TryRemove(roomName, out _);
         }
         public async Task<long> GetDiagramVersion(string roomName)
         {
@@ -499,17 +541,17 @@ namespace SignalRServer.Hubs
 
                 if (!string.IsNullOrEmpty(roomName))
                 {
-                    if (_roomUsers.TryGetValue(roomName, out var roomDict))
+                    await RemoveUserFromRoomAsync(roomName, Context.ConnectionId);
+
+                    // Check if room is now empty and reset counters
+                    var remainingUsers = await GetRoomUserCountAsync(roomName);
+                    if (remainingUsers == 0)
                     {
-                        roomDict.TryRemove(Context.ConnectionId, out _);
-                        if (roomDict.IsEmpty)
-                        {
-                            _roomUsers.TryRemove(roomName, out _);
-                            _roomNextUserNumber.TryRemove(roomName, out _);
-                        }
+                        await ResetRoomCountersAsync(roomName);
+                        _roomUsers.TryRemove(roomName, out _);
                     }
                 }
-                List<string> activeUsers = GetCurrentUsers(roomName);
+                List<string> activeUsers = await GetCurrentUsersAsync(roomName);
                 await Clients.Group(roomName).SendAsync("CurrentUsers", activeUsers);
                 // Clear context
                 Context.Items.Remove("DiagramId");

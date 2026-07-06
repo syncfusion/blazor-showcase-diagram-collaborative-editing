@@ -1,14 +1,12 @@
 @namespace DiagramCollaboration
 
 @using DiagramCollaboration.Shared
-@using Microsoft.Extensions.Logging
 @using Syncfusion.Blazor.Diagram
 @using Syncfusion.Blazor.Diagram.SymbolPalette
 @using System.Collections.ObjectModel
 @using Syncfusion.Blazor.Navigations
 @using Syncfusion.Blazor.SplitButtons
 @using Syncfusion.Blazor.Inputs
-@using Syncfusion.Blazor.Spinner
 @using Microsoft.AspNetCore.SignalR.Client
 @using System.Text.Json
 @inject IJSRuntime JS
@@ -376,7 +374,7 @@
             <div class="db-diagram-container">
                 <div id="diagramContainerDiv" class=@DiagramContainerClassName style="position:relative;">
                     <DiagramMessagePopUp @ref="DiagramMessageRef"></DiagramMessagePopUp>
-                    <SfDiagramComponent @ref="@DiagramInstance" ID="@DiagramId" @bind-Connectors="@DiagramConnectors" HistoryChanged="@OnHistoryChange" SelectionChanging="@OnSelectionChanging" SizeChanged="@SizeChanged" PositionChanged="@PositionChanged" RotationChanged="@RotateChanged" CollectionChanged="CollectionChanged" SelectionChanged="@OnSelectionChanged" Height="100%" GetCustomTool="@GetCustomTool" @bind-Nodes="@DiagramNodes" SelectionSettings="@SelectionSettings" NodeCreating="OnNodeCreating" DragDrop="DragDropEvent" @bind-InteractionController="@DiagramTool" @bind-DrawingObject="@DiagramDrawingObject" TextChanged="TextChanged">
+                    <SfDiagramComponent @ref="@DiagramInstance" ID="@DiagramId" @bind-Connectors="@DiagramConnectors" HistoryChanged="@OnHistoryChange" SizeChanged="@SizeChanged" PositionChanged="@PositionChanged" RotationChanged="@RotateChanged" CollectionChanged="CollectionChanged" SelectionChanged="@OnSelectionChanged" Height="100%" GetCustomTool="@GetCustomTool" @bind-Nodes="@DiagramNodes" SelectionSettings="@SelectionSettings" NodeCreating="OnNodeCreating" DragDrop="DragDropEvent" @bind-InteractionController="@DiagramTool" @bind-DrawingObject="@DiagramDrawingObject" TextChanged="TextChanged">
                         <PageSettings @bind-ShowPageBreaks="@DiagramShowPageBreaks" @bind-Orientation="@DiagramOrientation" @bind-Width="@DiagramPageWidth" @bind-Height="@DiagramPageHeight" @bind-MultiplePage=@IsMultiplePage>
                             <BackgroundStyle @bind-Background="@DiagramBgColor"></BackgroundStyle>
                             <PageMargin @bind-Left="@marginLeft" @bind-Top="@marginRight"></PageMargin>
@@ -434,7 +432,7 @@
                         int overlapCount = SelectedElements.Intersect(peer.NodeIds).Count();
 
                         int offsetX = 5;
-                        int offsetY = 20 * (hasMultipleUsers ? overlapCount : 0) - 15;
+                        int offsetY = 22 * (hasMultipleUsers ? overlapCount : 0) - 15;
 
                         double rad = angle * Math.PI / 180; // convert to radians
 
@@ -449,17 +447,36 @@
                         rotatedX += offsetX;
                         rotatedY += offsetY;
 
+                        const double badgeWidth = 50;
+                        const double badgeHeight = 20;
+                        const double cornerRadius = 10;
+
                         @if (int.TryParse(userName, out int userId))
                         {
                             string userTitle = $"Guest ID: SF{userId:D4}";
                             string userDetail = $"G-{userId:D4}";
 
-                            <foreignObject x="@rotatedX" y="@rotatedY" width="50" height="30">
-                                <div xmlns="http://www.w3.org/1999/xhtml" title="@userTitle"
-                                     style="background:@userColor; color:#fff; border-radius:10px; display:flex; align-items:center; justify-content:center;">
+                            <g transform="translate(@rotatedX, @rotatedY)">
+                                <title>@userTitle</title>
+
+                                <rect x="0"
+                                      y="0"
+                                      width="@badgeWidth"
+                                      height="@badgeHeight"
+                                      rx="@cornerRadius"
+                                      ry="@cornerRadius"
+                                      fill="@userColor" />
+
+                                <text x="@(badgeWidth / 2)"
+                                      y="@(badgeHeight / 2)"
+                                      fill="#ffffff"
+                                      font-size="12"
+                                      font-family="Arial"
+                                      text-anchor="middle"
+                                      dominant-baseline="central">
                                     @userDetail
-                                </div>
-                            </foreignObject>
+                                </text>
+                            </g>
                         }
                         SelectedElements.AddRange(peer.NodeIds);
                     }
@@ -837,7 +854,7 @@
         if (connection == null)
         {
             connection = new HubConnectionBuilder()
-                        .WithUrl(NavigationManager.ToAbsoluteUri("/diagramHub"), options =>
+                        .WithUrl(new Uri(NavigationManager.BaseUri + "diagramHub"), options =>
                         {
                             options.SkipNegotiation = false;
                             options.Transports = Microsoft.AspNetCore.Http.Connections.HttpTransportType.WebSockets | Microsoft.AspNetCore.Http.Connections.HttpTransportType.LongPolling;
@@ -1286,7 +1303,7 @@
                         canRefresh = true;
                     }
                 }
-                if (kvp.Value.NodeIds!.Count > 1)
+                if (kvp.Value.NodeIds!.Count > 0)
                 {
                     SelectorBounds selectorBounds = CalculateSelectorBounds(kvp.Value.NodeIds, 0);
                     _peerSelections[kvp.Key] = (kvp.Value.UserName ?? string.Empty, kvp.Value.NodeIds, selectorBounds);
@@ -1489,18 +1506,6 @@
         {
             IsSingleNode = true;
             IsMultipleNode = true;
-        }
-    }
-
-    public async void OnSelectionChanging(Syncfusion.Blazor.Diagram.SelectionChangingEventArgs args)
-    {
-        if (args.NewValue!.Count > 1)
-        {
-            DiagramInstance!.SelectionSettings!.Constraints = DiagramInstance.SelectionSettings.Constraints & ~SelectorConstraints.Rotate;
-        }
-        else
-        {
-            DiagramInstance!.SelectionSettings!.Constraints = DiagramInstance.SelectionSettings.Constraints | SelectorConstraints.Rotate;
         }
     }
 
@@ -6133,7 +6138,8 @@
 
     private void RotateChanged(RotationChangedEventArgs args)
     {
-        DiagramPropertyPanel.NodeRotateAngleValue(args.NewValue.RotationAngle);
+        if(DiagramInstance.SelectionSettings?.Nodes.Count == 1 && DiagramInstance.SelectionSettings?.Connectors.Count == 0)
+            DiagramPropertyPanel.NodeRotateAngleValue(args.NewValue.RotationAngle);
     }
     @*Hidden:Lines*@
     public async void Dispose()

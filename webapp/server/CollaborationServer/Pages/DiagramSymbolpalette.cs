@@ -1,10 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Threading.Tasks;
-using Syncfusion.Blazor.Navigations;
-using Syncfusion.Blazor.Diagram;
+﻿using Syncfusion.Blazor.Diagram;
 using Syncfusion.Blazor.Diagram.SymbolPalette;
-using System.Xml.Linq;
 using Orientation = Syncfusion.Blazor.Diagram.Orientation;
 
 namespace DiagramCollaboration

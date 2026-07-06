@@ -163,7 +163,6 @@ UtilityMethods_hideElements = function (elementType, diagramType) {
     }
     var diagramContainer = document.getElementsByClassName('db-diagram-container')[0];
     diagramContainer.style.width = "calc(100% - 250px)";
-    window.dispatchEvent(new Event('resize'));
 };
 UtilityMethods_showElements = function (elementType, diagramType) {
     var diagramContainer = document.getElementsByClassName('diagramcollaboration-container')[0];
@@ -172,7 +171,6 @@ UtilityMethods_showElements = function (elementType, diagramType) {
     }
     var diagramContainer = document.getElementsByClassName('db-diagram-container')[0];
     diagramContainer.style.width = "calc(100% - 350px)";
-    window.dispatchEvent(new Event('resize'));
 };
 function hideMenubar() {
     UtilityMethods_hideElements('hide-menubar');
