@@ -16,17 +16,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Setup .NET8
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 8.0.x
-    - name: Setup .NET9
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 9.0.x
     - name: Setup .NET10
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 10.0.x
     - name: Build Server
-      run: dotnet build .webapp/server/DiagramCollaborativeEditing/DiagramCollaboration.csproj
+      run: dotnet build ./webapp/server/DiagramCollaborativeEditing/DiagramCollaboration.csproj
