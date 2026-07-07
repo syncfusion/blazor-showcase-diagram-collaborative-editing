@@ -46,7 +46,7 @@
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <!-- To choose the proper font family -->
     <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet'>
-    <link href="_content/Syncfusion.Blazor/styles/bootstrap5.css" rel="stylesheet" />
+    <link href="_content/Syncfusion.Blazor.Themes/bootstrap5.css" rel="stylesheet" />
     <link href="assets/dbstyle/bootstrap5.css" rel="stylesheet" />
     <link href="assets/dbstyle/bootstrap5.min.css" rel="stylesheet" />
     @{
@@ -66,7 +66,16 @@
     }
     <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
     <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet'>
-    <script src="_content/Syncfusion.Blazor/scripts/syncfusion-blazor.min.js"></script>
+    <script src="@Assets["_content/Syncfusion.Blazor.Diagram/scripts/sf-diagramcomponent.min.js"]" type="text/javascript"></script>
+    <script src="@Assets["_content/Syncfusion.Blazor.DropDowns/scripts/sf-dropdownlist.min.js"]" type="text/javascript"></script>
+    <script src="@Assets["_content/Syncfusion.Blazor.Inputs/scripts/sf-colorpicker.min.js"]" type="text/javascript"></script>
+    <script src="@Assets["_content/Syncfusion.Blazor.Popups/scripts/sf-tooltip.min.js"]" type="text/javascript"></script>
+    <script src="@Assets["_content/Syncfusion.Blazor.Navigations/scripts/sf-toolbar.min.js"]"></script>
+    <script src="@Assets["_content/Syncfusion.Blazor.Navigations/scripts/sf-treeview.min.js"]"></script>
+    <script src="@Assets["_content/Syncfusion.Blazor.Buttons/scripts/sf-checkbox.min.js"]"></script>
+    <script src="@Assets["_content/Syncfusion.Blazor.Popups/scripts/sf-dialog.min.js"]"></script>
+    <script src="@Assets["_content/Syncfusion.Blazor.Inputs/scripts/sf-uploader.min.js"]"></script>
+    <script src="@Assets["_content/Syncfusion.Blazor.Lists/scripts/sf-listview.min.js"]"></script>
     
     <HeadOutlet @rendermode="@InteractiveServer" />
 </head>

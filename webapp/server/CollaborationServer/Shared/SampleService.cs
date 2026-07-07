@@ -1,7 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-
-namespace DiagramCollaboration.Shared
+﻿namespace DiagramCollaboration.Shared
 {
     public class SampleService
     {

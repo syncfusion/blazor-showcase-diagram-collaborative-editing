@@ -67,6 +67,19 @@ end
             }
         }
 
+        public async Task<long> IncrementAsync(string key)
+        {
+            try
+            {
+                return await _database.StringIncrementAsync(key);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error incrementing key {Key}", key);
+                return 0;
+            }
+        }
+
         public async Task<T?> GetAsync<T>(string key)
         {
             try

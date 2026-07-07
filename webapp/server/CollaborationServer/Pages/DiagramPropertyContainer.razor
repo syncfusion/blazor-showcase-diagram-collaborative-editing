@@ -7,7 +7,6 @@
 @using Syncfusion.Blazor.Popups
 @using System.Collections.ObjectModel
 @using Syncfusion.Blazor.SplitButtons
-@using Newtonsoft.Json.Linq
 @using System.Drawing
 @inject IJSRuntime js
 
@@ -894,6 +893,7 @@
     {
         TextPropertyVisibility = "block";
         StateHasChanged();
+        Parent.isPropertyChanged = false;
     }
     public void gradientPropertyVisibility(string id, bool value)
     {
