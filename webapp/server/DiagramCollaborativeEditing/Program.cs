@@ -76,6 +76,14 @@ if (!app.Environment.IsDevelopment())
 app.UsePathBase("/development/showcase/collaborative-diagram-editing");
 
 app.UseHttpsRedirection();
+
+// SEO: Add X-Robots-Tag header for search engine indexing
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.Append("X-Robots-Tag", "index, follow");
+    await next();
+});
+
 app.MapStaticAssets();
 app.UseRouting();
 app.UseCors("AllowAll");
